@@ -1,0 +1,143 @@
+<!-- views/editasset.ejs -->
+<!doctype html>
+<html>
+<head><% include /partials/head %>
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAAycqDtBxmyKFTh7AcRuqGpd4TkqtcWGI"></script>
+  <script>
+  var geocoder;
+  var coordinates;
+  var assets = <%- JSON.stringify(assets) %>;
+
+
+function initialize() 
+{
+  geocoder = new google.maps.Geocoder();
+  changeasset() 
+}
+
+  function codeAddress(address) {
+    geocoder.geocode( { 'address': address}, function(results, status) {
+      coordinates = results;
+      document.forms.data.lat.value = results[0].geometry.location.k;
+      document.forms.data.lng.value = results[0].geometry.location.D;
+      console.log(address);
+      console.log(results);
+      console.log(status);
+    });
+  }
+
+ function changeasset() {
+      console.log('changed');
+      var ind = document.forms.data.assetid.selectedIndex;
+      document.forms.data.assetname.value = assets[ind].assetname;
+      document.forms.data.blockno.value = assets[ind].blockno;
+      document.forms.data.unitno.value = assets[ind].unitno;
+      document.forms.data.street.value = assets[ind].street;
+      document.forms.data.postcode.value = assets[ind].postcode;
+      document.forms.data.lat.value = assets[ind].lat;
+      document.forms.data.lng.value = assets[ind].lng;
+    }
+
+
+google.maps.event.addDomListener(window, 'load', initialize);
+
+</script>
+
+</head>
+<body><header> <% include /partials/header %> </header>
+
+<div class="container">
+
+
+<div class="col-sm-6 col-sm-offset-3">
+
+  <p class="lead">Edit Meter</p>
+
+  <!-- show any messages that come back with authentication -->
+  <% if (message.length > 0) { %>
+    <div class="alert alert-danger"><%= message %></div>
+  <% } %>
+
+  <!-- EDIT ASSET FORM -->
+  <form action="/editasset/<%= accountname %>/<%= assetid%> " method="post" id="data">
+    <div class="form-group" id="assetid">
+      <label for="assetid">Select Meter</label>
+      <select class="form-control" name="assetid" id="assetgroup" onchange="changeasset()">
+        <% assets.forEach(function(err, index) {%>
+        <option value="<%=assets[index].assetid%>" <% if (assetid == assets[index].assetid) {%>selected<% } %>> <%=assets[index].assetname%> (<%=assets[index].assetid%>) </option>
+        <% });%>
+      </select>
+    </div>
+<div class="form-group">
+      <input type="text" class="form-control" name="assetname" placeholder="Asset Name">
+    </div>
+
+      <div class="form-group">
+        <div class="row">
+          <div class="col-sm-6">
+            <input type="text" class="form-control" name="blockno" placeholder="Block No">
+          </div>
+          <div class="col-sm-6">
+            <input type="text" class="form-control" name="unitno" placeholder="Unit No">
+          </div>
+        </div>
+      </div>
+      <div class="form-group">
+
+        <div class="row">
+          <div class="col-sm-8">
+            <input type="text" class="form-control" name="street" placeholder="Street">
+          </div>
+          <div class="col-sm-4" id="change">
+            <input type="text" class="form-control" name="postcode" placeholder="Postcode">
+          </div>
+        </div>
+      </div>
+
+
+      <div class="form-group">
+        <div class="row">
+          <div class="col-sm-6">
+            <input class="form-control" type="text" name="lat" placeholder="Latitude" readonly>
+          </div>
+          <div class="col-sm-6">
+            <input class="form-control" type="text" name="lng" placeholder="Longitude" readonly>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <textarea  class="form-control" name="remarks" placeholder="Notes" rows="3"></textarea>
+      </div>
+     
+
+    <button type="submit" name="submit" value ="edit" class="btn btn-warning btn-lg">Edit Meter</button>
+    <button type="submit" name="submit" value ="delete" class="btn btn-danger btn-lg">Delete Meter</button>
+  </form>
+
+
+</div>
+
+
+
+</div>
+
+<script type="text/javascript">
+
+
+  $(document).ready(function(){
+     $(document.body).on('blur change', '#change input', function(){
+  //  $('#change').on('blur change', 'input', function(){
+            console.log('Change');
+            codeAddress(document.forms.data.blockno.value+','+document.forms.data.street.value+', Singapore, '+document.forms.data.postcode.value);
+    });
+
+
+});
+
+
+</script>
+
+
+</body>
+</html>

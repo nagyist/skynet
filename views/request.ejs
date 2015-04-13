@@ -1,0 +1,48 @@
+<!-- views/request.ejs -->
+<!doctype html>
+<html>
+<head>
+  <title>Sunseap Enterprise Leasing</title>
+  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.2/css/bootstrap.min.css">
+  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.min.css">
+  <link rel="stylesheet" href="/css/chartist.min.css">
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="/js/chartist.min.js"></script>
+  <style>
+    body    { padding-top:80px; }
+  </style>
+</head>
+<body>
+<div class="container">
+
+<div class="col-sm-8 col-sm-offset-2">
+
+  <p class="lead"> Request Account Access</p>
+
+  <!-- LOGIN FORM -->
+  <form action="/requestuser" method="post">
+    <div class="form-group">
+      <label>Name</label>
+      <input type="text" class="form-control" name="username">
+    </div>
+    <div class="form-group">
+      <label>Email</label>
+      <input type="text" class="form-control" name="email">
+    </div>    
+    <div class="form-group">
+      <label>Account</label>
+      <input type="text" class="form-control" name="account">
+    </div>
+
+    <button type="submit" class="btn btn-warning btn-lg">Request</button>
+  </form>
+
+  <hr>
+
+  <p>Requests may take up to 24-48 hours. Thanks for your understanding. Return <a href="/">home</a>.</p>
+
+</div>
+
+</div>
+</body>
+</html>

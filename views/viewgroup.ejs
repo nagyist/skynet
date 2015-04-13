@@ -1,0 +1,47 @@
+<!-- views/viewuser.ejs -->
+<!doctype html>
+<html>
+<head><% include /partials/head %></head>
+<body><header> <% include /partials/header %> </header>
+
+<div class="container">
+
+<div class="col-sm-8 col-sm-offset-2">
+
+  <p class='lead'>Meter Group List</p>
+
+    
+      <div class="col-sm-12">
+          <table class="table table-hover">
+          <thead>
+            <tr>
+              <td><strong>Group Name (ID)</strong></td>
+              <td><strong>Meter Name</strong></td>
+              <td><strong>Meter ID</strong></td> 
+              <td><strong>Data</strong></td>
+            </tr>
+          </thead>
+        <% groups.forEach(function(err, index) { %>
+
+            <tr>
+              <td><%=groups[index].groupname%> (<%=groups[index].groupid%>) </td>
+              <td><%=groups[index].assetname%> </td>
+              <td><%=groups[index].assetid%> </td>
+              <td><a href="../viewdata/<%=groups[index].assetid%>">View Data</a></li>
+              </td>
+            </tr>
+        
+
+        <% }) %>
+  </table>
+      </div>
+
+
+  <hr>
+  <p><a href="export/group_<%=groupid%>" role="button" class="btn btn-info">Export List</a>
+
+</div>
+
+</div>
+</body>
+</html>

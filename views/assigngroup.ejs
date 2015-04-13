@@ -1,0 +1,140 @@
+<!-- views/creategroup.ejs -->
+<!doctype html>
+<html>
+<head><% include /partials/head %>
+
+<script type="text/javascript">
+  
+  var assets = <%- JSON.stringify(assets) %>;
+  var groups = <%- JSON.stringify(groups) %>;
+  var users = <%- JSON.stringify(users) %>;
+  var access = <%- JSON.stringify(access) %>;
+
+
+
+</script>
+
+</head>
+<body><header> <% include /partials/header %> </header>
+
+<div class="container">
+
+<div class="col-sm-6 col-sm-offset-3">
+
+  <p class="lead">Assign Groups </p>
+
+  <!-- show any messages -->
+  <% if (message.length > 0) { %>
+    <div class="alert alert-danger"><%= message %></div>
+  <% } %>
+
+  <!-- LOGIN FORM -->
+  <form name="assigngroup" action="/assigngroup" method="post" id="assigngroup">
+    <div class="form-group">
+      <label for="group">Group</label>
+      <select class="form-control" name="groupid" id="groups">
+        <% groups.forEach(function(err, index) {%>
+        <option value= '<%=groups[index].groupid%>'> <%=groups[index].groupname%> </option>
+        <% });%>
+      </select>
+    </div>
+    <div class="form-group">
+    <input type="hidden" name="username" value="0" />
+    <input type="hidden" name="act" value="0" />
+    <input type="hidden" name="accountname" value="<%=accountname%>" />
+        <label for="group">Users</label>
+
+        <table class="table table-hover">
+          <thead>
+            <tr>
+              <td><strong>Username</strong></td>
+              <td><strong>First Name</strong></td>
+              <td><strong>Last Name</strong></td> 
+              <td><strong>Role</strong></td>
+              <td><strong>Status</strong></td>
+            </tr>
+          </thead>
+
+        <% groups.forEach(function(err, index) {%>
+
+        <tbody id="<%=groups[index].groupid%>">
+            <% users.forEach(function(err, index1) { %> <!-- lists each user -->
+
+                <tr>
+                  <td><%=users[index1].username%> </td>
+                  <td><%=users[index1].firstname%> </td>
+                  <td><%=users[index1].lastname%> </td>
+                  <td><%=users[index1].rolename%> </td>
+                  <td>
+                  <% var response = '0';  %>
+                    <% access.forEach(function(err, index2) { %>
+                      <% if (users[index1].username == access[index2].username && groups[index].groupid == access[index2].groupid){%>
+                        <% response = 'Remove'; %>
+                      <% } else { %>
+                        <% if (response != 'Remove') { %>
+                          <% response = 'Add';%>
+                        <% } %>                      
+                      <% } %>
+                    <% }); %>
+                    
+                    <a href="#" id="submitact" onmouseover="DoSubmit('<%=users[index1].username%>','<%=response%>');" onclick="SubmitIt();"><%=response%></a>
+
+                  </td>
+                </tr>
+            <% }); %>
+
+        </tbody>
+        <% }); %>
+
+        </table>
+    </div>
+  </form>
+
+  <hr>
+
+</div>
+
+</div>
+
+<script>
+
+  <% groups.forEach(function(err, index) {%>
+    <% if(index>0) {%>
+  $('#<%=groups[index].groupid%>').hide();
+    <% } %>
+  <% });%>
+
+
+var form = document.getElementById("assigngroup");
+
+function DoSubmit(a,b) {  
+console.log(a,b);
+document.assigngroup.act.value = b;
+document.assigngroup.username.value = a;
+};
+
+function SubmitIt() {  
+  console.log('submitted');
+  form.submit();
+};
+
+
+
+
+$(function () {
+  $("#groups").change(function() {
+    var val = $(this).val();
+    console.log('val: ',val);
+        <% groups.forEach(function(err, index) {%>
+    console.log('<%=groups[index].groupid%> hide: ',<%=groups[index].groupid%>)
+        $('#<%=groups[index].groupid%>').hide();
+        <% });%>
+        $('#'+val).show();
+
+  });
+});
+
+</script>
+
+</body>
+</html>

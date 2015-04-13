@@ -1,0 +1,135 @@
+<!--
+
+how would this work?
+
+~trigger
+
+
+
+create an event based off a piece of data -> form dropdown for the data
+
+
+greater than
+less than
+between
+equal to
+text that contains
+
+unit time -> form dropdown, per reading, per hour, per day, per week
+
+~action
+
+notify
+
+select the person
+
+- custom message
+- results
+
+
+-->
+
+
+<!-- views/createvent.ejs -->
+<!doctype html>
+<html>
+<head><% include /partials/head %></head>
+<body><header> <% include /partials/header %> </header>
+
+<div class="container">
+
+<div class="col-sm-6 col-sm-offset-3">
+
+  <h1><span class="fa fa-sign-in"></span> Add Event</h1>
+
+  <!-- show any messages that come back with authentication -->
+  <% if (message.length > 0) { %>
+    <div class="alert alert-danger"><%= message %></div>
+  <% } %>
+
+
+  <h3><span class="fa fa-sign-in"></span> Select Trigger</h3>
+
+  <!-- LOGIN FORM -->
+  <form action="/createasset" method="post">
+
+    <div class="row">
+      <div class="col-sm-6 form-group">
+      <label>Metric</label>
+
+        <select class="form-control" name="metric">
+          <% metrics.forEach(function(err, index) {%>
+          <option value= '<%=metrics[index].COLUMN_NAME%>'> <%=metrics[index].COLUMN_NAME%> </option>
+          <% });%>
+        </select> 
+      </div>
+      <div class="col-sm-6 form-group">
+        <label>Rule</label>
+
+        <select class="form-control" name="rule" id="rule">
+          <option value= 'lessthan'> is less than </option>
+          <option value= 'greaterthan'> is greater than </option>
+          <option value= 'between'>is between </option>
+          <option value= 'equalto'>is equal to </option>
+        </select>
+      </div>
+    </div>
+    <div class="row">
+
+
+        <div class="col-sm-5 form-group">
+          <input type="text" class="form-control" name="val1"> 
+        </div>
+        <div class="col-sm-2 form-group">
+        <label style="text-align:center;">and</label>
+        </div>
+        <div class="col-sm-5 form-group ">
+          <input type="text" class="form-control" name="val2" id="between" value="">
+        </div>
+    </div>
+    <div class="form-group">
+      <label>Asset Name</label>
+      <input type="text" class="form-control" name="assetname">
+    </div>
+  
+
+    <button type="submit" class="btn btn-warning btn-lg">Add Asset To Account</button>
+  </form>
+
+  <hr>
+  <h3><span class="fa fa-sign-in"></span> Select Action</h3>
+
+
+
+
+
+  <p>Return <a href="/profile">home</a>.</p>
+
+</div>
+
+</div>
+    <script>
+
+    $('.dropdown-toggle').dropdown()
+     $('input#between').hide()
+     $('label#between').hide()
+    $('select#rule').change(function() {
+        var selection = $(this).val();
+        switch(selection){
+
+          case "between":
+            $('input#between').show()
+            $('label#between').show()
+            break;
+          default:
+            $('input#between').hide()
+            $('label#between').hide()
+        }
+
+    });
+
+    </script>
+
+
+</body>
+</html>

@@ -1,0 +1,220 @@
+<% var admin = 0 ;%>
+<% var mgr = 0 ;%>
+<% for (x = 0; x < accounts.length;x++) {%>
+  <% if (accounts[x].roleid < 3) { %>
+  <% mgr = 1; } %>
+  <% if (accounts[x].roleid < 2) { %>
+  <% admin = 1; } %> 
+<% } %>
+
+<nav class="navbar navbar-default profile">
+  <div class="container-fluid">
+    <!-- Brand and toggle get grouped for better mobile display -->
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="/">
+                <img src="/img/sunseap_logo.png">
+      </a>      
+      </div>
+
+    <!-- Collect the nav links, forms, and other content for toggling -->
+    <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+      
+      <ul class="nav navbar-nav">
+
+        <!--<li><a href="/profile">Profile <span class="sr-only">(current)</span></a></li>-->
+
+
+        <% if (admin == 1) { %> <!-- this is if you are an administrator -->
+            <% if (accounts.length == 1) { %> <!-- this is if you are an administrator -->
+              <li><a class="accent" href="/profile"> <%=accounts[0].accountname%> (<%=accounts[0].rolename%>)</a></li>
+
+            <% } else { %>  
+
+              <li class="dropdown">
+                <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">Accounts<span class="caret"></span></a>
+                <ul class="dropdown-menu" role="menu">
+
+                  <% accounts.forEach(function(err, index) {%>
+                  <li><a href="/account/<%=accounts[index].accountname%>"><%=accounts[index].accountname%> - <%=accounts[index].rolename%></a></li>
+                  <% if(index < accounts.length-1) {%>
+                  <li class="divider"></li>
+                  <% } %>
+                  <% });%>
+
+                </ul>
+              </li>
+            <% } %>
+        <% } else { %>  <!-- this is if you are a manager -->
+        
+        <li><a class="accent" href="/profile"> <%=accounts[0].accountname%> (<%=accounts[0].rolename%>)</a></li>
+
+
+        <% } %>
+
+
+        <li class="dropdown">
+          <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">Groups<span class="caret"></span></a>
+          <ul class="dropdown-menu" role="menu">
+
+            <% accounts.forEach(function(err, index) {%>
+              <% if (accounts[index].roleid < 3) { %> <!-- this is if you were an account/root access -->
+                <% if(index > 1) {%>
+                <li class="divider"></li>
+                <% } %>
+                <% if(accounts.length > 1) {%>
+                  <p><%=accounts[index].accountname%></p> <!-- list the accounts (only root would have more than one account?) -->
+                <% } %>
+
+                <li><a href="/creategroup">Create Group</a></li>
+                <!--<li><a href="/editgroup">Edit Groups</a></li>-->
+                <li><a href="/assigngroup/<%=accounts[index].accountname%>">Assign Groups</a></li>
+                <li><a href="/viewgroup/<%=accounts[index].accountname%>">View Groups</a></li>
+              <% } else { %> <!-- manager/eng only have access to viewing groups -->
+                <% groups.forEach(function(err, j) {%> <!-- assigned groups -->
+                      <li><a href="/viewgroup/<%=groups[j].groupid%>"><%=groups[j].groupname%></a></li>
+                <% }); %>
+
+              <% } %>
+            <% if(index < accounts.length-1) {%>
+            <li class="divider"></li>
+            <% } %>
+
+            <% });%>
+                <li class="divider"></li>
+                <li><a href="/viewgroup/all">View All Groups</a></li>
+
+
+          </ul>
+        </li>
+
+
+
+        <li class="dropdown">
+          <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">Meters<span class="caret"></span></a>
+          <ul class="dropdown-menu" role="menu">
+
+            <% accounts.forEach(function(err, index) {%>
+              <% if (accounts[index].roleid < 2) { %>
+                <% if(index > 1) {%>
+                <li class="divider"></li>
+                <% } %>
+                <p><%=accounts[index].accountname%></p>
+                <li><a href="/createasset">Add Meter</a></li>
+                <li><a href="/viewasset/<%=accounts[index].accountname%>">View Meters</a></li>
+              <% } else { %>
+                 <p><%=accounts[index].accountname%></p>
+                <li><a href="/viewasset/<%=accounts[index].accountname%>">View Meters</a></li>
+              <% } %>
+            <% });%>
+
+          </ul>
+        </li>   
+
+
+        <% if (mgr == 1) { %>
+        <li class="dropdown">
+          <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">Users<span class="caret"></span></a>
+          <ul class="dropdown-menu" role="menu">
+
+            <% accounts.forEach(function(err, index) {%>
+              <% if (accounts[index].roleid < 3) { %>
+                <% if(index > 1) {%>
+                <li class="divider"></li>
+                <% } %>
+                <p><%=accounts[index].accountname%></p>
+
+                <li><a href="/createuser/<%=accounts[index].accountname%>">Create New User</a></li>
+
+                <li><a href="/viewuser/<%=accounts[index].accountname%>">View Users</a></li>
+
+              <% } %>
+            <% });%>
+
+          </ul>
+        </li>      
+        
+        <% } %>
+
+        <li class="dropdown">
+          <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">Events<span class="caret"></span></a>
+          <ul class="dropdown-menu" role="menu">
+            <li><a href="/">** IN DEVELOPMENT **</a></li>
+
+            <% accounts.forEach(function(err, index) {%>
+              <% if (accounts[index].roleid < 3) { %>
+                <% if(index > 1) {%>
+                <li class="divider"></li>
+                <% } %>
+
+                <p><%=accounts[index].accountname%></p>
+                <li><a href="/createevent">Add Event</a></li>
+                <li><a href="/editevent/<%=accounts[index].accountname%>">Edit Events</a></li>
+                <li><a href="/viewevent/<%=accounts[index].accountname%>">View Events</a></li>
+              <% } else { %>
+                 <p><%=accounts[index].accountname%></p>
+                <li><a href="/viewevent/<%=accounts[index].accountname%>">View Events</a></li>
+              <% } %>
+            <% });%>
+          </ul>
+        </li>
+<!--
+        <li class="dropdown">
+          <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">Reports<span class="caret"></span></a>
+          <ul class="dropdown-menu" role="menu">
+
+            <% accounts.forEach(function(err, index) {%>
+              <% if (accounts[index].roleid < 3) { %>
+                <% if(index > 1) {%>
+                <li class="divider"></li>
+                <% } %>
+                <p><%=accounts[index].accountname%></p>
+                <li><a href="/createevent">Add Event</a></li>
+                <li><a href="/editevent/<%=accounts[index].accountname%>">Inbox</a></li>
+                <li><a href="/viewevent/<%=accounts[index].accountname%>">Generate Adhoc</a></li>
+              <% } else { %>
+                 <p><%=accounts[index].accountname%></p>
+                <li><a href="/viewevent/<%=accounts[index].accountname%>">View Meters</a></li>
+              <% } %>
+            <% });%>
+
+          </ul>
+        </li>
+-->
+        <!--<li class="dropdown">
+          <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">Billing<span class="caret"></span></a>
+          <ul class="dropdown-menu" role="menu">
+
+            <% accounts.forEach(function(err, index) {%>
+              <% if (accounts[index].roleid < 3) { %>
+                <% if(index > 1) {%>
+                <li class="divider"></li>
+                <% } %>
+                <p><%=accounts[index].accountname%></p>
+                <li><a href="/createevent">Add Event</a></li>
+                <li><a href="/editevent/<%=accounts[index].accountname%>">Edit Events</a></li>
+                <li><a href="/viewevent/<%=accounts[index].accountname%>">View Meters</a></li>
+              <% } else { %>
+                 <p><%=accounts[index].accountname%></p>
+                <li><a href="/viewevent/<%=accounts[index].accountname%>">View Meters</a></li>
+              <% } %>
+            <% });%>
+
+          </ul>
+        </li>-->
+
+
+       </ul>
+ 
+      <ul class="nav navbar-nav navbar-right">
+        <p class="navbar-text">Signed in as <a href="/profile"><%= user.username %></a></p>
+        <li><a href="/logout">Logout</a></li>
+      </ul>
+    </div><!-- /.navbar-collapse -->
+  </div><!-- /.container-fluid -->
+</nav>

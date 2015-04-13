@@ -1,0 +1,287 @@
+<!-- views/viewdata.ejs -->
+<!doctype html>
+<html>
+<head><% include /partials/head %></head>
+<body><header> <% include /partials/header %> </header>
+
+<div class="container">
+
+<div class="col-sm-8 col-sm-offset-2">
+
+  <h3><span class="fa fa-tasks"></span> Data Report for <%= data[0].assetname %></h3>
+
+  <form action="/viewdata/<%=data[0].assetid%>" name="data"  id="data" method="post">
+    <div class="col-sm-12 ">
+    <label> Parameters </label>
+    </div>
+    <div class="col-sm-6 ">
+      <input value="<%=data[0].assetid%>" type="hidden" name="assetid">
+      <div class="form-group input-daterange input-group" id="datepicker">
+          <input type="text" name="start" value="<%=start%>" class="input-sm form-control" id="input-daterange">
+          <span class="add-on input-group-addon">to</span>
+          <input type="text" name="end" value="<%=end%>" class="input-sm form-control" id="input-daterange">
+      </div>
+    </div>
+
+<!--
+    <div class="col-sm-6 ">
+    <div class="form-group input-group">
+            <input type='text' class="form-control" id='datetimepicker6'>
+          <span class="add-on input-group-addon">to</span>
+            <input type='text' class="form-control" id='datetimepicker7'>
+    </div>
+    </div>
+        <script type="text/javascript">
+            $(function () {
+                $('#datetimepicker6').datetimepicker();
+                $('#datetimepicker7').datetimepicker();
+                $("#datetimepicker6").on("dp.change",function (e) {
+                    $('#datetimepicker7').data("DateTimePicker").minDate(e.date);
+                });
+                $("#datetimepicker7").on("dp.change",function (e) {
+                    $('#datetimepicker6').data("DateTimePicker").maxDate(e.date);
+                });
+            });
+        </script>
+
+-->
+
+
+   <input type="hidden" name="svgimg" id="svgimg" value="0">
+
+    <div class="col-sm-offset-1 col-sm-5">
+        <button type="submit" name="submit" value ="update" class="btn btn-primary pull-right">Refresh</button>
+        <button type="submit" name="submit" value ="export" class="btn btn-primary pull-right">CSV</button>
+        <button type="submit" name="submit" value ="report" class="btn btn-primary pull-right">Report</button>
+    </div>
+
+
+  </form>
+
+  <div class="ct-chart"></div>
+<!-- Report chart created here -->
+
+
+
+
+
+        <table class="table table-hover table-condensed">
+           <thead>
+          <tr>
+            <td><strong>Date/Time</strong></td>
+            <td><strong>Energy Total</strong></td>
+            <td><strong>Energy Importing</strong></td>
+            <td><strong>Energy Exporting</strong></td>
+          </tr>
+          </thead>
+        <% data.forEach(function(err, index) {%>
+          <tr>
+            <td><%=moment(data[index].TimeStamp).format('DD/MM/YY h:mm:ss a')%> </td>
+            <td><%=data[index].Energy_Total%></td>
+            <td><%=data[index].Energy_Importing%> </td>
+            <td><%=data[index].Energy_Exporting%> </td>
+          </tr>
+        <% });%>
+        </table>
+
+
+  <table cellpadding="0" cellspacing="0" border="0" class="display" id="example"></table>
+  <hr>
+ 
+
+</div>
+
+</div>
+
+<script type="text/javascript">
+
+// datepicker
+
+
+$('.input-daterange').datepicker({
+    format: 'dd/mm/yyyy',
+    endDate:'+1d'
+})
+
+// data select
+var data = <%- JSON.stringify(data) %>;
+var data_length = data.length;
+var engtot = [];
+var engimpt = [];
+var engexpt = [];
+var label = [];
+
+data.forEach(function(err, index) {
+  label.push(moment(data[index].TimeStamp).format('DD/MM/YY hh:mm:ss'));
+  engimpt.push(data[index].Energy_Importing);
+  engexpt.push(data[index].Energy_Exporting);
+  engtot.push(data[index].Energy_Total);
+
+});
+
+var options = {
+  // Options for X-Axis
+  axisX: {
+    // The offset of the labels to the chart area
+    offset: 30,
+    // Allows you to correct label positioning on this axis by positive or negative x and y offset.
+    labelOffset: {
+      x: 0,
+      y: 0
+    },
+    // If labels should be shown or not
+    showLabel: true,
+    // If the axis grid should be drawn or not
+    showGrid: true,
+    // Interpolation function that allows you to intercept the value from the axis label
+    labelInterpolationFnc: function skipLabels(value, index) {
+      return index % (Math.round(data_length/10))  === 0 ? value : null;
+    }
+  },
+  // Options for Y-Axis
+  axisY: {
+    // The offset of the labels to the chart area
+    offset: 40,
+    // Allows you to correct label positioning on this axis by positive or negative x and y offset.
+    labelOffset: {
+      x: 0,
+      y: 0
+    },
+    // If labels should be shown or not
+    showLabel: true,
+    // If the axis grid should be drawn or not
+    showGrid: true,
+    // Interpolation function that allows you to intercept the value from the axis label
+    labelInterpolationFnc: function roundthis(value) {
+      return (Math.round(value*1000)/1000);
+    },
+    // This value specifies the minimum height in pixel of the scale steps
+    scaleMinSpace: 20
+  },
+  // Specify a fixed width for the chart as a string (i.e. '100px' or '50%')
+  width: undefined,
+  // Specify a fixed height for the chart as a string (i.e. '100px' or '50%')
+  height: 400,
+  // If the line should be drawn or not
+  showLine: true,
+  // If dots should be drawn or not
+  showPoint: true,
+  // If the line chart should draw an area
+  showArea: false,
+  // The base for the area chart that will be used to close the area shape (is normally 0)
+  areaBase: 0,
+  // Specify if the lines should be smoothed. This value can be true or false where true will result in smoothing using the default smoothing interpolation function Chartist.Interpolation.cardinal and false results in Chartist.Interpolation.none. You can also choose other smoothing / interpolation functions available in the Chartist.Interpolation module, or write your own interpolation function. Check the examples for a brief description.
+  lineSmooth: false,
+  // Overriding the natural low of the chart allows you to zoom in or limit the charts lowest displayed value
+  low: undefined,
+  // Overriding the natural high of the chart allows you to zoom in or limit the charts highest displayed value
+  high: undefined,
+  // Padding of the chart drawing area to the container element and labels as a number or padding object {top: 5, right: 5, bottom: 5, left: 5}
+  chartPadding: 5,
+  // When set to true, the last grid line on the x-axis is not drawn and the chart elements will expand to the full available width of the chart. For the last label to be drawn correctly you might need to add chart padding or offset the last label with a draw event handler.
+  fullWidth: true,
+  // If true the whole data is reversed including labels, the series order as well as the whole series data arrays.
+  reverseData: true,
+  // Override the class names that get used to generate the SVG structure of the chart
+  classNames: {
+    chart: 'ct-chart-line',
+    label: 'ct-label',
+    labelGroup: 'ct-labels',
+    series: 'ct-series',
+    line: 'ct-line',
+    point: 'ct-point',
+    area: 'ct-area',
+    grid: 'ct-grid',
+    gridGroup: 'ct-grids',
+    vertical: 'ct-vertical',
+    horizontal: 'ct-horizontal'
+  }
+};
+
+
+ var chart = new Chartist.Line('.ct-chart', {
+    labels: label,
+    series: [
+      //engtot
+      engimpt
+      //,engexpt
+    ]
+  }, options);
+
+var $chart = $('.ct-chart');
+
+var $toolTip = $chart
+  .append('<div class="tooltip"></div>')
+  .find('.tooltip')
+  .hide();
+
+
+function grid() {
+  this.x1 = new Array();
+  this.x2 = new Array();
+  this.y1 = new Array();
+  this.y2 = new Array();
+
+}
+
+  var hgrid = new grid();
+  var vgrid = new grid();
+
+
+chart.on('draw',function (){
+  if (!!$('.ct-chart-line > g.ct-series > path')[0]) {
+
+    //console.log($('.ct-chart-line > g.ct-series > path')[0].getAttribute("d"));
+    document.data.svgimg.value = $('.ct-chart-line > g.ct-series > path')[0].getAttribute("d");
+    $("line.ct-horizontal").each(function(index){
+    hgrid.x1[index]  = $("line.ct-horizontal")[index].getAttribute("x1");
+    hgrid.x2[index]  = $("line.ct-horizontal")[index].getAttribute("x2");
+    hgrid.y1[index]  = $("line.ct-horizontal")[index].getAttribute("y1");
+    hgrid.y2[index]  = $("line.ct-horizontal")[index].getAttribute("y2");
+    });
+
+    $("line.ct-vertical").each(function(index){
+    vgrid.x1[index]    = $("line.ct-vertical")[index].getAttribute("x1");
+    vgrid.x2[index]    = $("line.ct-vertical")[index].getAttribute("x2");
+    vgrid.y1[index]    = $("line.ct-vertical")[index].getAttribute("y1");
+    vgrid.y2[index]    = $("line.ct-vertical")[index].getAttribute("y2");
+    });
+
+
+
+  }
+  //console.log(document.data.svgimg.value);
+
+});
+
+$chart.on('mouseenter', '.ct-point', function() {
+
+  var $point = $(this),
+    value = $point.attr('ct:value'),
+    seriesName = $point.parent().attr('ct:series-name');
+  $toolTip.html(value).show();
+});
+
+$chart.on('mouseleave', '.ct-point', function() {
+  $toolTip.hide();
+});
+
+$chart.on('mousemove', function(event) {
+  $toolTip.css({
+    left: (event.offsetX || event.originalEvent.layerX) - $toolTip.width()/2 + 8,// - $toolTip.width() / 2 - 10,
+    top: (event.offsetY || event.originalEvent.layerY)  - $toolTip.height() + 30
+  });
+
+
+});
+
+
+    $(function () {
+        $("[rel='tooltip']").tooltip();
+    });
+
+
+</script>
+
+</body>
+</html>

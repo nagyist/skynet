@@ -1,0 +1,63 @@
+<!-- views/createuser.ejs -->
+<!doctype html>
+<html>
+<head><% include /partials/head %></head>
+<body><header> <% include /partials/header %> </header>
+
+
+<div class="container">
+
+<div class="col-sm-6 col-sm-offset-3">
+
+  <p class="lead">Create User Account</p>
+
+  <!-- show any messages that come back with authentication -->
+  <% if (message.length > 0) { %>
+    <div class="alert alert-info"><%= message %></div>
+  <% } %>
+
+  <!-- LOGIN FORM -->
+  <form action="/createuser" method="post">
+    <div class="form-group">
+      <label for="accountname">Account</label>
+      <select class="form-control" name="accountid">
+        <% accounts.forEach(function(err, index) {%>
+        <option value= '<%=accounts[index].accountid%>'> <%=accounts[index].accountname%> </option>
+        <% });%>
+      </select>
+      <label for="roleid">Role</label>
+      <select class="form-control" name="roleid">
+
+        <option value='3'> User </option>
+        <option value='2'> Manager </option>
+        <% if (accounts.some(function(el) {return el.roleid < 2})) {%>
+          <option value='1'> Administrator </option>
+        <%} %>
+        <% if (accounts.some(function(el) {return el.roleid < 1})) {%>
+          <option value='0'> Root </option>
+        <%} %>
+      </select>
+
+      <div class="form-group">
+      <label>E-mail Address</label>
+      <input type="text" class="form-control" name="email">
+    </div>
+    <div class="form-group">
+      <label>Username</label>
+      <input type="text" class="form-control" name="username">
+    </div>
+
+        <div class="form-group">
+      <label>Password</label>
+      <input type="password" class="form-control" name="password">
+    </div>
+
+    <button type="submit" class="btn btn-warning btn-lg">Create User</button>
+  </form>
+
+  <hr>
+</div>
+
+</div>
+</body>
+</html>

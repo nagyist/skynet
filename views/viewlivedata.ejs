@@ -1,0 +1,73 @@
+<!-- views/viewassetlive.ejs -->
+<!doctype html>
+<html>
+<head><% include /partials/head %></head>
+<body><header> <% include /partials/header %> </header>
+
+<div class="container">
+
+<div class="col-sm-10 col-sm-offset-1">
+
+  <h1><span class="fa fa-sign-in"></span> Meter View</h1>
+        
+        <% data.forEach(function(err, index) { %>
+    <div class="well">
+      <div class="row">
+        <div class="col-sm-12">
+          <p align="center"><strong><%= data[index].assetname%></strong></p>
+          <p align="center"><%= moment(data[index].TimeStamp).format('DD MMMM YYYY, h:mm:ss a') %> <br></p>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-sm-3"><h4>Phase Voltage</h4>
+          <p><strong>V1</strong>: <%=data[index].PhaseVoltage_L1%> <br>
+          <strong>V2</strong>: <%=data[index].PhaseVoltage_L2%> <br>
+          <strong>V3</strong>: <%=data[index].PhaseVoltage_L3%> <br></p>
+
+          <h4>Line Voltage</h4>
+          <p><strong>V12</strong>: <%=data[index].LineVoltage_L12%> <br>
+          <strong>V31</strong>: <%=data[index].LineVoltage_L31%> <br>
+          <strong>V23</strong>: <%=data[index].LineVoltage_L23%> <br></p>
+
+          <h4>Phase Current</h4>
+          <p><strong>I1</strong>: <%=data[index].PhaseCurrent_I1%> <br>
+          <strong>I2</strong>: <%=data[index].PhaseCurrent_I2%> <br>
+          <strong>I3</strong>: <%=data[index].PhaseCurrent_I3%> <br></p>
+
+        </div>
+        <div class="col-sm-6">
+          <img src="/img/meter_diagram.png" width="100%">
+        </div>
+
+
+        <div class="col-sm-3">
+
+
+
+
+        <h4>Total Power</h4>
+        <p><strong>Apparent</strong>: <%=data[index].TotalApparentPower_3P%> <br>
+        <strong>Active</strong>: <%=data[index].TotalActivePower_3P%> <br>
+        <strong>Reactive</strong>: <%=data[index].TotalReactivePower_3P%> <br>
+        <strong>Phase Power Factor</strong>: <%=data[index].PhasePowerFactor_3P/10%> <br>
+        <h4>Frequency</h4>
+        <strong>System</strong>: <%=data[index].SystemFrequency%> <br>
+        <h4>Energy</h4>
+
+        <strong> Total</strong>: <%=data[index].Energy_Total%> <br>
+        <strong> Importing</strong>: <%=data[index].Energy_Importing%> <br>
+        <strong> Exporting</strong>: <%=data[index].Energy_Exporting%> <br></p>
+
+        </div>
+      </div>
+        <% }); %>
+
+    </div>
+
+  <hr>
+
+</div>
+
+</div>
+</body>
+</html>
