@@ -1,20 +1,20 @@
-<!-- views/profile.ejs -->
+<!-- views/index.ejs -->
 <!doctype html>
 <html>
-<head>
-	<title>Node Authentication</title>
-	<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.2/css/bootstrap.min.css">
-	<link rel="stylesheet" href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.min.css">
-	<style>
-		body 		{ padding-top:80px; word-wrap:break-word; }
-	</style>
-</head>
+<head><% include /partials/head %></head>
+
 <body>
+
+
+<header> <% include /partials/header %> </header>
+
 <div class="container">
+  <% if (message.length > 0) { %>
+    <div class="alert alert-info"><%- message %>  <button type="button" class="close" data-dismiss="alert">&times;</button></div>
+  <% } %>
 
 	<div class="page-header text-center">
-		<h1><span class="fa fa-anchor"></span> Profile Page</h1>
-		<a href="/logout" class="btn btn-default btn-sm">Logout</a>
+		<h3>Profile Page</h3>
 	</div>
 
 	<div class="row">
@@ -22,19 +22,85 @@
 		<!-- LOCAL INFORMATION -->
 		<div class="col-sm-6">
 			<div class="well">
-				<h3><span class="fa fa-user"></span> Local</h3>
-
-					<p>
-						<strong>id</strong>: <%= user.id %><br>
-						<strong>username</strong>: <%= user.username %><br>
-						<strong>password</strong>: <%= user.password %>
-					</p>
+				<p class='lead'>Information</p>
+					<table class="table">
+					<tr><td><strong>User Name</strong></td><td> <%= user.username %></td></tr>
+					<tr><td><strong>E-mail Address</strong></td><td> <%= user.email %></td></tr>
+					  <% if (profile.length > 0) { %> 
+					<tr><td><strong>Name</strong></td><td> <%= profile[0].firstname %> <%= profile[0].lastname %></td></tr>
+					<tr><td><strong>Address</strong></td><td><%= profile[0].address %></td></tr>
+					<tr><td><strong>City</strong></td><td> <%= profile[0].city %></td></tr>
+					<tr><td><strong>Postal Code</strong></td><td> <%= profile[0].postal %></td></tr>
+					<tr><td><strong>Phone Number</strong></td><td> <%= profile[0].phone %></td></tr>
+					  <% } %>
+					</table>
+					<p><a href="/editprofile">Edit Information</a></p>
+					<p><a href="/resetpassword">Change Password</a></p>
+					
 
 			</div>
+
+			<div class="well">
+				<p class='lead'>Annoucements</p>
+					<table class="table">
+					<tr>
+						<td><strong>Date</strong></td>
+						<td><strong>User</strong></td>
+						<td><strong>Announcement</strong></td>
+					</tr>
+          <% alerts.forEach(function(err, index) {%>
+					<tr>
+						<td><%=alerts[index].timestamp.toLocaleDateString() %></td>
+						<td><%=alerts[index].username %></td>
+						<td><%=alerts[index].announcement %></td>
+					</tr>
+					<% }); %>
+					</table>
+
+			</div>
+
 		</div>
 
-	</div>
+		<div class="col-sm-6">
 
+				<div class="well">
+					<p class='lead'>Account Overview</p>
+       <table class="table">
+          <tr>
+            <td><strong>Account</strong></td>
+            <td><strong>Role</strong></td>
+            <td><strong>Meters</strong></td>
+            <td><strong>Details</strong></td>
+          </tr>
+			<% accounts.forEach(function(err, index) {%>
+      <% var assetcount = 0; %>
+        <% assets.forEach(function(err, j) { %>
+          <% if (accounts[index].accountid == assets[j].accountid) { %>
+          <% assetcount = assetcount+1; %>
+          <% } %>
+        <% }); %>
+          <tr>
+            <td><%=accounts[index].accountname%></td>
+            <td><%=accounts[index].rolename%></td>
+            <td><%=assetcount%></td>
+            <td><a href="/account/<%=accounts[index].accountname%>">View</a></td>
+          </tr>
+
+			<% });%>
+      </table>
+				</div>
+
+		</div>
+
+  <hr>
 </div>
+</div>
+
+<footer>
+  <% include /partials/footer %>
+</footer>
+
+
+
 </body>
 </html>
