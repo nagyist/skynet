@@ -138,18 +138,18 @@ google.maps.event.addDomListener(window, 'load', initialize);
     <div class="col-sm-9">      
       <div class="well" style="min-height:107px">
         <div class="col-sm-4">
-        <p class="lead">Total Export</p>
-        <div class="totexport"></div>
+        <h5>Current Power</h5>
+        <div class="power"></div>
         </div>
 
         <div class="col-sm-4">
-          <p class="lead">Total Import</p>
+          <h5>Total Import</h5>
           <div class="totimport"></div>
         </div>
 
         <div class="col-sm-4">
-          <p class="lead">Total Import</p>
-          <div class="totimport"></div>
+          <h5>Total Export</h5>
+          <div class="totexport"></div>
         </div>
       </div>
     </div><!-- col -->
@@ -191,13 +191,19 @@ google.maps.event.addDomListener(window, 'load', initialize);
   <div role="tabpanel">
     <!-- Nav tabs -->
     <ul class="nav nav-pills " role="tablist">
+      <li class="active"><a id="tab0" href="#hourly" aria-controls="hourly" role="tab" data-toggle="tab">Hourly</a></li>
       <li class=""><a id="tab1" href="#daily" aria-controls="daily" role="tab" data-toggle="tab">Daily</a></li>
-      <li class="active"><a id="tab2" href="#weekly" aria-controls="weekly" role="tab" data-toggle="tab">Weekly</a></li>
+      <li class=""><a id="tab2" href="#weekly" aria-controls="weekly" role="tab" data-toggle="tab">Weekly</a></li>
       <li class=""><a id="tab3" href="#monthly" aria-controls="monthly" role="tab" data-toggle="tab">Monthly</a></li>
     </ul>
 
     <!-- Tab panes -->
     <div class="tab-content">
+      <div role="tabpanel" class="tab-pane active" id="hourly">
+        <p class="lead"> Hourly Energy Generated / Used (kWh)</p>
+        <canvas id="myChart0"></canvas>
+        <div id="myChart0-legend" class="chart-legend"></div>
+      </div>
       <div role="tabpanel" class="tab-pane active" id="daily">
         <p class="lead"> Daily Energy Generated / Used (kWh)</p>
         <canvas id="myChart1"></canvas>
@@ -231,6 +237,26 @@ google.maps.event.addDomListener(window, 'load', initialize);
     </div>
   </div>
     <div class="col-sm-3"> <!-- multiple boxes here -->
+     <div class="well">
+<iframe id="forecast_embed" type="text/html" frameborder="0" height="245" width="100%" src="http://forecast.io/embed/#lat=1.283333&lon=-103.833333&name=Singapore&units=ca"> </iframe></div>
+
+     <div class="well">
+
+     <div class="savings_icon"><i class="fa fa-car"></i></div>
+       <div class="savings">
+         <h5>CO<sub>2</sub> Emissions Saved</h5>
+         <div class="co2_emissions"></div>
+       </div>
+
+       <div class="savings_icon"><i class="fa fa-pagelines"></i></div>
+       <div class="savings">
+        <h5>Trees Planted</h5>
+        <div class="trees"></div>
+      </div>
+
+    </div>
+
+
 
       <div class="well">
         <p class="lead">Parameters</p>
@@ -257,27 +283,6 @@ google.maps.event.addDomListener(window, 'load', initialize);
 
         </form>
         </div>
-
-     <div class="well">
-
-     <div class="savings_icon"><i class="fa fa-car"></i></div>
-       <div class="savings">
-         <h5>CO<sub>2</sub> Emissions Saved</h5>
-         <div class="co2_emissions"></div>
-       </div>
-
-       <div class="savings_icon"><i class="fa fa-pagelines"></i></div>
-       <div class="savings">
-        <h5>Trees Planted</h5>
-        <div class="trees"></div>
-      </div>
-
-    </div>
-
-     <div class="well">
-
-     <br><br><br><br><br>
-    </div>
 
   </div> <!-- col -->
 
@@ -364,8 +369,6 @@ $('.input-daterange').datepicker({
 
 // data select
 var data = <%- JSON.stringify(data) %>;
-var data_length = data[0].length;
-
 var engimpt = [];
 var engexpt = [];
 var label = [];
@@ -400,18 +403,68 @@ var co2_emissions = totimport * 0.689551; // kwh to kg CO2
 
 var trees = totimport * 0.01768079487; // kwh to average tree
 
+var power = <%- JSON.stringify(power) %>;
+
+$('div.power').html("<p class='lead'>"+Math.round(power[0][0].Total*100)/100+" W</p>");
+$('div.totexport').html("<p class='lead'>"+Math.round(totexport*100)/100+" kWh</p>");
+$('div.totimport').html("<p class='lead'>"+Math.round(totimport*100)/100+" kWh</p>");
+$('div.co2_emissions').html("<p class='lead'>"+Math.round(co2_emissions*100)/100+" kg</p>");
+$('div.trees').html("<p class='lead'>"+Math.round(trees*100)/100+" trees</p>");
+
 // end environmental conversions
 
-$('div.totexport').html(Math.round(totexport*100)/100+" kWh");
-$('div.totimport').html(Math.round(totimport*100)/100+" kWh");
-$('div.co2_emissions').html(Math.round(co2_emissions*100)/100+" kg");
-$('div.trees').html(Math.round(trees*100)/100+" trees");
+// hourly select
+var hourly = <%- JSON.stringify(hourly) %>;
+var hourlyimpt = [];
+var hourlyexpt = [];
+var hourlylabel = [];
 
+hourly[0].forEach(function(err, index) {
+  hourlylabel.push(hourly[0][index].hour1+':00');
+  hourlyimpt.push(hourly[0][index].eng_import_diff);
+  hourlyexpt.push(hourly[0][index].eng_export_diff);
+
+});
+
+var tothourexport = hourlyimpt.reduce( function(total, num){ return total + num }, 0);
+var tothourimport = hourlyexpt.reduce( function(total, num){ return total + num }, 0);
+
+    var hourlydata = {
+        labels: hourlylabel,
+        datasets: [
+            {
+                label: "Import",
+                fillColor: "rgba(220,220,220,0.2)",
+                strokeColor: "rgba(220,220,220,1)",
+                pointColor: "rgba(220,220,220,1)",
+                pointStrokeColor: "#fff",
+                pointHighlightFill: "#fff",
+                pointHighlightStroke: "rgba(220,220,220,1)",
+                //highlightFill: "rgba(220,220,220,1)",
+                //highlightStroke: "rgba(220,220,220,1)",
+                data: hourlyimpt
+            },
+            {
+                label: "Export",
+                fillColor: "rgba(151,187,205,0.2)",
+                strokeColor: "rgba(151,187,205,1)",
+                pointColor: "rgba(151,187,205,1)",
+                pointStrokeColor: "#fff",
+                pointHighlightFill: "#fff",
+                pointHighlightStroke: "rgba(151,187,205,1)",
+                //highlightFill: "rgba(151,187,205,1)",
+                //highlightStroke: "rgba(151,187,205,1)",
+                data: hourlyexpt
+            }
+        ]
+    };
+
+
+// end hourly select
 
 
 // weekly select
 var weekly = <%- JSON.stringify(weekly) %>;
-var weekly_length = weekly[0].length;
 var weeklyimpt = [];
 var weeklyexpt = [];
 var weeklylabel = [];
@@ -450,12 +503,10 @@ var totweekimport = weeklyexpt.reduce( function(total, num){ return total + num 
     };
 
 
-
 // end weekly select
 
 // monthly select
 var monthly = <%- JSON.stringify(monthly) %>;
-var monthly_length = monthly[0].length;
 var monthlyimpt = [];
 var monthlyexpt = [];
 var monthlylabel = [];
@@ -557,6 +608,12 @@ document.data.sum_impt.value = sumexpt.reduce(function(pv, cv) { return pv + cv;
     //var myChart = document.getElementById("myChart").getContext("2d");
     //var myBarchart1 = new Chart(myChart).Bar(data, chart_options);
 
+
+      var ctx0 = $("#myChart0").get(0).getContext("2d");
+      var myBarchart0 = new Chart(ctx0).Line(hourlydata, chart_options);
+      document.getElementById('myChart0-legend').innerHTML = myBarchart0.generateLegend();
+
+
       var ctx1 = $("#myChart1").get(0).getContext("2d");
       var myBarchart1 = new Chart(ctx1).Bar(data, chart_options);
       document.getElementById('myChart1-legend').innerHTML = myBarchart1.generateLegend();
@@ -589,11 +646,22 @@ document.data.sum_impt.value = sumexpt.reduce(function(pv, cv) { return pv + cv;
       });
 */
 
+      $('a#tab0[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+          e.target // newly activated tab
+          e.relatedTarget // previous active tab
+          myBarchart2.destroy();
+          myBarchart3.destroy();
+          myBarchart1.destroy();
+          myBarchart0 = new Chart(ctx0).Line(hourlydata, chart_options);
+      });
+
+
       $('a#tab1[data-toggle="tab"]').on('shown.bs.tab', function (e) {
           e.target // newly activated tab
           e.relatedTarget // previous active tab
           myBarchart2.destroy();
           myBarchart3.destroy();
+          myBarchart0.destroy();
           myBarchart1 = new Chart(ctx1).Bar(data, chart_options);
       });
 
@@ -602,6 +670,7 @@ document.data.sum_impt.value = sumexpt.reduce(function(pv, cv) { return pv + cv;
           e.relatedTarget // previous active tab
           myBarchart1.destroy();
           myBarchart3.destroy();
+          myBarchart0.destroy();
           myBarchart2 = new Chart(ctx2).Bar(weeklydata, chart_options);
       });
 
@@ -610,6 +679,7 @@ document.data.sum_impt.value = sumexpt.reduce(function(pv, cv) { return pv + cv;
           e.relatedTarget // previous active tab
           myBarchart1.destroy();
           myBarchart2.destroy();
+          myBarchart0.destroy();
           myBarchart3 = new Chart(ctx3).Bar(monthlydata, chart_options);
       });
 
@@ -617,6 +687,7 @@ document.data.sum_impt.value = sumexpt.reduce(function(pv, cv) { return pv + cv;
     /** this is come when complete page is fully loaded, including all frames, objects and images **/
     $('div#weekly').removeClass('active');
     $('div#monthly').removeClass('active');
+    $('div#daily').removeClass('active');
     });
     // for report export (move this later)
 

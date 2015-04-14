@@ -65,8 +65,6 @@ io.on('connection', function (socket) {
   });
 });
 
-
-
   // =====================================
   // HOME PAGE (with login links) ========
   // =====================================
@@ -674,6 +672,10 @@ app.post('/editprofile',isLoggedIn, function(req, res, next ) {
   pool.getConnection(function(err, connection) {
     if(err) { console.log(err); return; }
 
+  connection.query("call hourly_gen_by_account(?,?)",[req.params.accountname,30], function(err, hourly) {
+
+  connection.query("call current_power_by_account(?)",[req.params.accountname], function(err, power) {
+
     connection.query("call custom_daily_gen_by_account(?,?,?) ",[req.params.accountname,startdate,enddate], function(err, rows) {
     
       connection.query("call weekly_gen_by_account(?,?) ",[req.params.accountname,10], function(err, weekly) {
@@ -689,7 +691,7 @@ app.post('/editprofile',isLoggedIn, function(req, res, next ) {
                               left join f_asset fa on fa.assetid = da.assetid left join d_accounts dac on dac.accountid = fa.accountid \
                               WHERE dac.accountname = ? and m.Timestamp between ? and ? \
                               group by year, month, day order by m.TimeStamp asc",[req.params.accountname,startdate,enddate], function(err, sum) {
-              console.log(sum);
+              //console.log(sum);
 
                   var headers = {};
                   for (key in rows[0]) {
@@ -698,7 +700,9 @@ app.post('/editprofile',isLoggedIn, function(req, res, next ) {
                   connection.release();
                   res.render('account.ejs', {
                     moment:moment,
+                    power:power,
                     data: rows,
+                    hourly: hourly,
                     weekly: weekly,
                     monthly: monthly,
                     sum: sum,
@@ -714,7 +718,8 @@ app.post('/editprofile',isLoggedIn, function(req, res, next ) {
         }); // query - sum
       }); // query - assets
     }); // query - rows
-
+  }); // query - account
+  }); // query - hourly
   }); // pool
 
 });

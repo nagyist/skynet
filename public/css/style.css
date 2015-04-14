@@ -52,7 +52,7 @@ canvas#myChart{
 
 }
 
-.bar-legend {
+.bar-legend, .line-legend {
 
   height: 5px;
 }
@@ -294,8 +294,18 @@ body {
   text-align: center;
 }
 
+/* --- NAVIGATION UPDATES --- */
 
 
+.nav-pills>li>a {
+  border-radius: 50px !important;
+  padding: 4px 14px;
+  margin-right: 5px;
+  margin-bottom: 5px;
+}
+
+
+/* --- NAVIGATION UPDATES --- */
 
 
 /* --- NAVIGATION UPDATES --- */
@@ -309,7 +319,7 @@ nav.profile{
   border-color: #22313F;
 }
 
-li.active > a{
+nav.profile .navbar-nav > li.active > a{
   background-color: #59ABE3 !important;
   color:#000 !important;
 }
