@@ -130,33 +130,27 @@ google.maps.event.addDomListener(window, 'load', initialize);
     <div class="alert alert-info"><%- message %>  <button type="button" class="close" data-dismiss="alert">&times;</button></div>
   <% } %>
 
-	<!--<div class="page-header text-center">
-		<h3>Account Overview - <%=accountname%></h3>
-	</div>-->
+  <!--<div class="page-header text-center">
+    <h3>Account Overview - <%=accountname%></h3>
+  </div>-->
 <div class="row">
-		<!-- LOCAL INFORMATION -->
+    <!-- LOCAL INFORMATION -->
     <div class="col-sm-9">      
       <div class="well" style="min-height:107px">
-        <div class="col-sm-4 col-xs-6 ">
+        <div class="col-sm-4">
         <h5>Current Power</h5>
         <div class="power"></div>
         </div>
 
-        <div class="col-sm-4 col-xs-6 ">
+        <div class="col-sm-4">
           <h5>Total Import</h5>
           <div class="totimport"></div>
         </div>
 
-        <div class="col-sm-4 col-xs-6 ">
+        <div class="col-sm-4">
           <h5>Total Export</h5>
           <div class="totexport"></div>
         </div>
-
-        <div class="col-sm-4 col-xs-6 ">
-          <h5>Total Export</h5>
-          <div class="totexport"></div>
-        </div>
-  
       </div>
     </div><!-- col -->
 
@@ -188,7 +182,7 @@ google.maps.event.addDomListener(window, 'load', initialize);
     <div class="well">
       <p class="lead"> Energy Generation Profile</p>-->
       <!--<div class="ct-chart" id="chart1"></div>-->
-	 <!-- </div>
+   <!-- </div>
   </div>-->
 
 
@@ -312,7 +306,7 @@ google.maps.event.addDomListener(window, 'load', initialize);
               <td><strong>Name</strong></td>
               <td><strong>ID</strong></td>
               <td><strong>Address</strong></td>
-              <!--<td><strong>Lat & Long</strong></td>-->
+              <td><strong>Lat & Long</strong></td>
             </tr>
             </thead>
         <% assets.forEach(function(err, index) {%>
@@ -320,7 +314,7 @@ google.maps.event.addDomListener(window, 'load', initialize);
               <td><%=assets[index].assetname%></td>
               <td><%=assets[index].assetid%></td>
               <td><%=assets[index].street%>, <%=assets[index].postcode%></td>
-              <!--<td><%=assets[index].lat%>, <%=assets[index].lng%></td>-->
+              <td><%=assets[index].lat%>, <%=assets[index].lng%></td>
 
             </tr>
 

@@ -656,18 +656,16 @@ app.post('/editprofile',isLoggedIn, function(req, res, next ) {
 
 
 
-  // =====================================
-  // ACCOUNT SECTION =====================
-  // =====================================
+  // ===============================================================================================================
+  // ACCOUNT SECTION ===============================================================================================
+  // ===============================================================================================================
   // we will want this protected so you have to be logged in to visit
   // we will use route middleware to verify this (the isLoggedIn function)
   app.get('/account/:accountname', isLoggedIn, function(req, res) {
 
-
+  // provides start and end date for the report (move later)
   var startdate = moment(new Date()).subtract(8,'d').format("YYYY-MM-DD 00:00:00");
   var enddate = moment(new Date()).add(1,'d').format("YYYY-MM-DD 00:00:00");
-      //console.log(startdate);
-      //console.log(enddate);
 
   pool.getConnection(function(err, connection) {
     if(err) { console.log(err); return; }
@@ -676,7 +674,7 @@ app.post('/editprofile',isLoggedIn, function(req, res, next ) {
 
   connection.query("call current_power_by_account(?)",[req.params.accountname], function(err, power) {
 
-    connection.query("call custom_daily_gen_by_account(?,?,?) ",[req.params.accountname,startdate,enddate], function(err, rows) {
+    connection.query("call daily_gen_by_account(?,?) ",[req.params.accountname,10], function(err, rows) {
     
       connection.query("call weekly_gen_by_account(?,?) ",[req.params.accountname,10], function(err, weekly) {
 
@@ -979,6 +977,371 @@ app.post('/account/file-upload/:accountname', function(req, res, next) {
 
           doc.fontSize(8);
           doc.font('Helvetica');
+          doc.text('Payment received on or after '+moment(req.body.end,'DD/MM/YYYY').add(1,'d').format('DD MMM YYYY')+' may not be included in this bill', 30, 345);           
+
+          // top row
+          doc.text('CURRENT MONTH CHARGES', 40, 385);           
+          doc.text('Electricity charges w/o Sunseap solar', 255, 380);           
+          doc.text('Electricity charges w/ Sunseap solar', 415, 380);           
+          // second row
+          doc.text('Electricity (kWh)', 175, 395);           
+          doc.text('Effective Rate ($)', 255, 395);           
+          doc.text('Amount ($)', 335, 395);           
+          doc.text('Effective Rate ($)', 415, 395);           
+          doc.text('Amount ($)', 495, 395);           
+
+          // top row
+          doc.rect(30, 375, 140, 30);  // current monthly charges
+          doc.rect(170, 375, 80, 15);  // blank 
+          doc.rect(250, 375, 160, 15); // with 
+          doc.rect(410, 375, 160, 15); // without
+
+          // second row
+          doc.rect(170, 390, 80, 15);  // elect 
+          doc.rect(250, 390, 80, 15); // effect 
+          doc.rect(330, 390, 80, 15); // amount 
+          doc.rect(410, 390, 80, 15); // effect
+          doc.rect(490, 390, 80, 15); // amount
+
+          // third row
+          doc.rect(30, 405, 140, 60);  // current monthly charges
+          doc.rect(170, 405, 80, 60);  // blank 
+          doc.rect(250, 405, 80, 60); // with 
+          doc.rect(330, 405, 80, 60); // with 
+          doc.rect(410, 405, 80, 60); // without
+          doc.rect(490, 405, 80, 60); // without
+  
+          doc.text('Reading taken on '+ req.body.end, 35, 410);           
+          doc.text('Exported', 40, 440);           
+          doc.text('Usage', 40, 455);           
+
+          doc.text(Math.round(req.body.sum_impt*1000)/1000, 175, 440);           
+          doc.text(Math.round(req.body.sum_expt*1000)/1000, 175, 455);           
+
+          //effective rates
+          doc.text(current_tariff - grid_charge, 255, 440);           
+          doc.text((current_tariff), 255, 455);           
+
+          // amount
+          doc.text(Math.round(req.body.sum_impt * (current_tariff - grid_charge)*1000)/1000, 335, 440);           
+          doc.text(Math.round(req.body.sum_expt * (current_tariff)*1000)/1000, 335, 455);           
+
+          //effective rates
+          doc.text(current_tariff - grid_charge, 415, 440);           
+          doc.text(sp_rate * (1 - discount), 415, 455);           
+
+          //amount
+          doc.text(current_tariff - grid_charge, 415, 440);           
+          doc.text(sp_rate * (1 - discount), 415, 455);           
+
+          // amount
+          doc.text(Math.round(req.body.sum_impt * (current_tariff - grid_charge)*1000)/1000, 495, 440);           
+          doc.text(Math.round(req.body.sum_expt * (sp_rate * (1 - discount))*1000)/1000, 495, 455);           
+
+          // fourth row
+          doc.rect(30, 465, 140, 40);  // current monthly charges
+          doc.rect(170, 465, 80, 40);  // blank 
+          doc.rect(250, 465, 80, 40); // with 
+          doc.rect(330, 465, 80, 40); // with 
+          doc.rect(410, 465, 80, 40); // without
+          doc.rect(490, 465, 80, 40); // without
+  
+          doc.text('Total charges subjected to GST', 35, 470);           
+          doc.text('Goods & Services Tax', 35, 485);           
+
+          // fifth row
+          doc.rect(30, 505, 380, 15);  // current monthly charges
+
+          doc.rect(410, 505, 160, 15); // without
+
+          doc.stroke();
+
+
+          var start_tax_date = '1 January';
+          var end_tax_date = '31 Mar';
+
+          doc.font('Helvetica-Bold');
+          doc.fontSize(10);
+          doc.text('From '+start_tax_date+' to '+end_tax_date+': ', 30, 540);           
+
+          doc.fontSize(8);
+          doc.font('Helvetica');
+          doc.text('Effective Export Rate = Current Tariff - Grid Charge = '+'current_tariff'+' - '+'grid_charge' + ' = ' + (current_tariff - grid_charge), 30, 555);           
+          doc.text('Effective Usage Rate = SP Rate x Discount Rate = '+'sp_rate'+' * '+'(1-discount)' + ' = ' + sp_rate * (1-discount), 30, 570);           
+          doc.text('Please make full payment by the due date to avoid late payment charges.', 30, 600);           
+          doc.text('Please visit www.sunseap-leasing.com for more information on our service and conditions of service.', 30, 615);           
+          doc.text('This bill services as a tax invoice for the collection of Solar Leasing Charges for SUNSEAP LEASING PTE LTD.', 30, 630);           
+
+          doc.text('for '+'SUNSEAP LEASING PTE LTD', 30, 660);     
+
+          doc.moveTo(30,700).lineTo(250, 700).stroke();
+          doc.moveTo(300,700 ).lineTo(500, 700).stroke();
+                
+          doc.text('Authorised Signature', 100, 705);  
+          doc.text('Company Stamp', 370, 705);
+          doc.pipe(res);
+                                //creating a new PDF object
+          //doc.pipe(fs.createWriteStream('testfile2.pdf'));  //creating a write stream 
+                      //to write the content on the file system
+                      // more things can be added here including new pages
+          doc.end(); //we end the document writing.
+      }); // query
+    }); // pool
+
+    }
+
+  });
+
+
+
+
+
+  // ===============================================================================================================
+  // REPORT SECTION ================================================================================================
+  // ===============================================================================================================
+  // this lets you view users in your account
+
+
+
+  app.get('/createreport/:accountname', isLoggedIn, function(req, res) {
+
+  // provides start and end date for the report
+  var startdate = moment(new Date()).subtract(8,'d').format("YYYY-MM-DD 00:00:00");
+  var enddate = moment(new Date()).add(1,'d').format("YYYY-MM-DD 00:00:00");
+
+
+  }); // create report
+
+
+
+
+  app.post('/createreport/:accountname', isLoggedIn, function(req, res) {
+
+  // pulls in the start and end date from the page / this should be date-time
+  var startdate = moment(req.body.start,'DD/MM/YYYY').format("YYYY-MM-DD 00:00:00");
+  var enddate = moment(req.body.end,'DD/MM/YYYY').format("YYYY-MM-DD 00:00:00");
+
+    // this is for an export of the data to excel
+    if(req.body.submit == "export") {
+
+    pool.getConnection(function(err, connection) {
+      if(err) { console.log(err); return; }
+
+      connection.query("select * from MeterLog left join d_asset on d_asset.assetid = MeterLog.MeterNo WHERE d_asset.assetid = ? and MeterLog.TimeStamp between ? and ? order by MeterLog.TimeStamp",[req.params.assetid,startdate,enddate], function(err, rows) {
+        var headers = {};
+        for (key in rows[0]) {
+            headers[key] = key;
+        }
+        connection.release();
+        rows.unshift(headers);
+        res.csv(rows);
+      });
+    });
+
+    // this is to update any parameters on the page
+    } else if(req.body.submit == "update") {
+
+    pool.getConnection(function(err, connection) {
+      if(err) { console.log(err); return; }
+
+
+    connection.query("select m.ClientFK, m.MeterNo, m.TimeStamp, m.TotalActiveDemand_3P, m.TotalReactiveDemand_3P, m.PhaseVoltage_L1, m.PhaseCurrent_I3, \
+                       m.PhaseVoltage_L2, m.PhaseVoltage_L3, m.LineVoltage_L12, m.LineVoltage_L31, m.LineVoltage_L23, m.PhaseCurrent_I1, m.PhaseCurrent_I2, \
+                       m.TotalApparentPower_3P, m.TotalActivePower_3P, m.TotalReactivePower_3P, m.PhasePowerFactor_3P, m.SystemFrequency, m.Energy_Total, \
+                       (PhaseVoltage_L1*PhaseCurrent_I1 + PhaseVoltage_L2*PhaseCurrent_I2 + PhaseVoltage_L2*PhaseCurrent_I2)/1000*PhasePowerFactor_3P/10 as Energy_Importing_Calc, \
+                       m.Energy_Importing, m.Energy_Exporting, da.assetname, da.assetid from MeterLog m left join d_asset da on da.assetid = m.MeterNo \
+                       left join f_asset fa on fa.assetid = da.assetid left join d_accounts dac on dac.accountid = fa.accountid \
+                       WHERE dac.accountname = ? and m.TimeStamp between ? and ? order by m.TimeStamp desc ",[req.params.accountname,startdate,enddate], function(err, rows) {
+      
+      connection.query("select fa.assetid, da.assetname, da.street, da.postcode, da.remarks, da.lat, da.lng, dac.accountid, dac.accountname from f_asset fa \
+                      left join d_asset da on fa.assetid = da.assetid left join d_accounts dac on fa.accountid = dac.accountid where dac.accountname = ?",req.params.accountname, function(err, assets) {
+        //console.log(rows);
+
+        connection.query("select DAY(m.timestamp) as day,Month(m.timestamp) as month, Year(m.timestamp) as year, \
+                          m.Energy_Importing, m.Energy_Exporting from MeterLog m left join d_asset da on da.assetid = m.MeterNo \
+                          left join f_asset fa on fa.assetid = da.assetid left join d_accounts dac on dac.accountid = fa.accountid \
+                          WHERE dac.accountname = ? and m.Timestamp between ? and ? \
+                          group by year, month, day order by m.TimeStamp asc",[req.params.accountname,startdate,enddate], function(err, sum) {
+
+
+          var headers = {};
+          for (key in rows[0]) {
+              headers[key] = key;
+          }
+          connection.release();
+          res.render('account.ejs', {
+            moment:moment,
+            sum: sum,
+            data: rows,
+            header:headers,
+            accountname: req.params.accountname,
+            assets:assets,
+            start: req.body.start,
+            end: req.body.end,
+            message:''
+          });
+        }); // query - sums
+      }); // query - assets
+    }); // query - rows
+
+    }); // pool
+
+
+    // this is to generate the report
+    } else if (req.body.submit == "report") {
+
+   pool.getConnection(function(err, connection) {
+      if(err) { console.log(err); return; }
+
+        connection.query("select MeterLog.Energy_Total, (MeterLog.PhaseVoltage_L1*MeterLog.PhaseCurrent_I1 + MeterLog.PhaseVoltage_L2*MeterLog.PhaseCurrent_I2 + MeterLog.PhaseVoltage_L2*MeterLog.PhaseCurrent_I2)/1000 as Energy_Importing, MeterLog.Energy_Exporting,MeterLog.TimeStamp, d_asset.assetid, d_asset.assetname from MeterLog left join d_asset on d_asset.assetid = MeterLog.MeterNo WHERE d_asset.assetid = ?  and MeterLog.TimeStamp between ? and ? order by MeterLog.TimeStamp desc",[req.params.assetid, startdate, enddate], function(err, rows) {
+
+          var energy_gen = 0;
+
+          rows.forEach(function(err, index) {
+            energy_gen = energy_gen + rows[index].Energy_Importing;
+          });
+
+          var current_tariff = 0.2329;
+          var grid_charge = 0.15;
+          var sp_rate = 0.2329;
+          var discount = 0.12;
+
+          //console.log(req.body.svgimg);
+
+          var headline = 'Tax Invoice';
+          var business = 'SUNSEAP LEASING PTE LTD';
+          var address1 = '18 Boon Lay Way #06-135';
+          var address2 = 'Singapore 609966';
+          var address3 = 'General Enquiries: +65 67954465';
+          var address4 = 'www.sunseap-leasing.com';
+          var address5 = 'Co. Registration No.: '+'201107952W';
+          var address6 = 'GST Reg No. '+'201107952W';
+
+          var location = 'Blk 214 Jurong East St 21, Singapore 600214';
+          var text2 = 'Energy Generation for this Period: '+Math.round(req.body.sum_impt*1000)/1000+' kWh';
+
+          var dates = 'Generated between ' + req.body.start+ ' and ' + req.body.end;
+          doc = new PDF({size:'A4'});  
+
+          res.writeHead(200, {
+                'Content-Type': 'application/pdf',
+                'Access-Control-Allow-Origin': '*',
+                'Content-Disposition': 'attachment; filename=Report.pdf'
+            });
+
+
+          // header - top
+          doc.font('Helvetica-Bold');
+          doc.fontSize(13);
+          doc.text(headline, 260, 30);             //adding the text to be written, 
+
+
+          // header - left
+          doc.image('public/img/sunseap_logo_trans.jpg',30,70, {width:50});
+          doc.font('Helvetica');
+          doc.fontSize(10);
+
+          doc.text(business, 95, 70);             //adding the text to be written, 
+          doc.text(address1, 95, 85);             //adding the text to be written, 
+          doc.text(address2, 95, 100);             //adding the text to be written, 
+          doc.text(address3, 95, 115);             //adding the text to be written, 
+          doc.text(address4, 95, 130);             //adding the text to be written, 
+          // header - right
+
+
+          //console.log((req.body.daily_img));
+          doc.image(req.body.daily_img,40, 410);
+
+          //doc.rect(10, 10, 575, 815); total width is 585 and height is 825
+          //doc.rect(10, 10, 575, 200);
+          doc.text(text2, 40, 410);             //adding the text to be written, 
+
+
+          doc.rect(30, 180, 400, 250);
+
+          doc.rect(30, 450, 400, 280);
+          doc.stroke();
+
+          doc.scale(0.7).translate(40,220);
+          doc.path(req.body.svgimg).stroke();
+
+          doc.translate(0,420);
+          doc.path(req.body.svgimg2).stroke();
+          doc.path(req.body.svgimg3).stroke();
+
+
+          doc.addPage({margin: 50,size:'A4'}) // invoice page 2
+
+          // header - top
+          doc.font('Helvetica-Bold');
+          doc.fontSize(13);
+          doc.text(headline, 260, 30);             //adding the text to be written, 
+
+          // header - left
+          doc.image('public/img/sunseap_logo_trans.jpg',30,70, {width:50});
+
+          doc.fontSize(8);
+          doc.text(business, 95, 70);             //adding the text to be written, 
+          doc.font('Helvetica');
+          doc.text(address1, 95, 85);             //adding the text to be written, 
+          doc.text(address2, 95, 100);             //adding the text to be written, 
+          doc.text(address3, 95, 115);             //adding the text to be written, 
+          doc.text(address4, 95, 130);             //adding the text to be written, 
+          
+          doc.text(address5, 95, 145);             //adding the text to be written, 
+          doc.text(address6, 95, 160);             //adding the text to be written, 
+
+
+
+          // address of the company
+
+
+          // header - right
+
+          doc.fontSize(8);
+          var bill = moment(new Date()).format('MMM YYYY')+' Bill';
+          var dated = 'Dated '+moment(new Date()).format('DD MMM YYYY');
+          doc.font('Helvetica-Bold');
+          doc.text(bill, 390, 70);             //adding the text to be written, 
+          doc.text(dated, 450, 70);             //adding the text to be written, 
+
+          doc.moveTo(350,85 ).lineTo(545, 85).stroke();
+          doc.font('Helvetica');
+          doc.text('Invoice Number: ' + '0001', 400, 100);             //adding the text to be written, 
+          doc.text('Type: ' + 'xxxxxx', 400, 115);             //adding the text to be written, 
+          doc.text('Account No: ' + 'Solar 0001', 400, 130);             //adding the text to be written, 
+          doc.text('Jurong Town Council', 400, 145);             
+          doc.text('BLK 255 Jurong East St 24 #01-303', 400, 160); 
+          doc.text('This is your tax invoice for: ', 400, 190);             //adding the text to be written, 
+          
+          // address of the meter/s
+          doc.text('BLK 214 Jurong East St 21', 400, 205);             //adding the text to be written, 
+          doc.text('Singapore 600214', 400, 220);             //adding the text to be written, 
+
+
+
+          // summary of charges box
+          doc.rect(30, 200, 300, 115);
+          doc.rect(250, 200, 80, 115);        
+          doc.rect(30, 200, 300, 15);
+          doc.rect(250, 200, 80, 15);   
+          doc.rect(30, 295, 300, 20);
+          doc.stroke();
+          // text
+          doc.text('SUMMARY OF CHARGES ' + req.body.start + ' to ' + req.body.end, 35, 205);             //adding the text to be written, 
+          doc.text('Amount ($)', 265, 205);             //adding the text to be written, 
+
+          // line items
+          doc.text('Balance B/F from Previous Bill', 35, 235);
+          doc.text('Outstanding Balance', 35, 265);           
+          doc.text('Total Current Charges due on ' + req.body.end, 35, 280);   
+          doc.font('Helvetica-Bold');
+          doc.fontSize(10);
+
+          doc.text('Total Amount Payable', 35, 300); 
+
+          doc.fontSize(8);
+          doc.font('Helvetica');
 
 
           doc.text('Payment received on or after '+moment(req.body.end,'DD/MM/YYYY').add(1,'d').format('DD MMM YYYY')+' may not be included in this bill', 30, 345);           
@@ -1099,6 +1462,19 @@ app.post('/account/file-upload/:accountname', function(req, res, next) {
     }
 
   });
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1229,6 +1605,16 @@ app.post('/assigngroup',isLoggedIn, function(req, res, next ) {
     }); // pool
 
   });
+
+
+
+
+
+
+
+
+
+
 
 
 
