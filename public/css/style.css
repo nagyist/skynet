@@ -18,6 +18,18 @@ height:34px !important;
 
 }
 
+.well.dashboard{
+min-height:107px 
+}
+
+@media (max-width: 767px) {
+
+  .well.dashboard{
+  min-height:187px;
+  } 
+
+}
+
 .navbar-default .navbar-toggle{
 border:0px;
 

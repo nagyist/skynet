@@ -1110,6 +1110,18 @@ app.post('/account/file-upload/:accountname', function(req, res, next) {
   var enddate = moment(new Date()).add(1,'d').format("YYYY-MM-DD 00:00:00");
 
 
+    res.render('createreport.ejs', {
+      moment:moment,
+      sum: sum,
+      data: rows,
+      header:headers,
+      accountname: req.params.accountname,
+      assets:assets,
+      start: req.body.start,
+      end: req.body.end,
+      message:''
+    });
+
   }); // create report
 
 

@@ -136,23 +136,23 @@ google.maps.event.addDomListener(window, 'load', initialize);
 <div class="row">
 		<!-- LOCAL INFORMATION -->
     <div class="col-sm-9">      
-      <div class="well" style="min-height:107px">
-        <div class="col-sm-4 col-xs-6 ">
-        <h5>Current Power</h5>
+      <div class="well dashboard">
+        <div class="col-sm-3 col-xs-6 text-center">
+        <h5 class="">Current Power</h5>
         <div class="power"></div>
         </div>
 
-        <div class="col-sm-4 col-xs-6 ">
-          <h5>Total Import</h5>
+        <div class="col-sm-3 col-xs-6 text-center">
+          <h5>Weekly Generation</h5>
           <div class="totimport"></div>
         </div>
 
-        <div class="col-sm-4 col-xs-6 ">
-          <h5>Total Export</h5>
+        <div class="col-sm-3 col-xs-6 text-center">
+          <h5>Weekly Consumption</h5>
           <div class="totexport"></div>
         </div>
 
-        <div class="col-sm-4 col-xs-6 ">
+        <div class="col-sm-3 col-xs-6 text-center">
           <h5>Total Export</h5>
           <div class="totexport"></div>
         </div>
@@ -260,23 +260,20 @@ google.maps.event.addDomListener(window, 'load', initialize);
         <div class="trees"></div>
       </div>
 
-    </div>
 
+      <!--<p class="lead">Parameters</p>-->
 
-
-      <div class="well">
-        <p class="lead">Parameters</p>
       <form action="/account/<%=accountname%>" name="data"  id="data" method="post">
 
           <input value="<%=accountname%>" type="hidden" name="accountname">
           <div class="form-group input-daterange input-group pull-left" id="datepicker">
-              <input type="text" name="start" value="<%=start%>" class="input-sm form-control" id="input-daterange">
-              <span class="add-on input-group-addon">to</span>
-              <input type="text" name="end" value="<%=end%>" class="input-sm form-control" id="input-daterange">
+              <input type="hidden" name="start" value="<%=start%>" class="input-sm form-control" id="input-daterange">
+              <!--<span class="add-on input-group-addon">to</span>-->
+              <input type="hidden" name="end" value="<%=end%>" class="input-sm form-control" id="input-daterange">
           </div>
-            <button type="submit" name="submit" value ="update" class="btn btn-sm btn-primary pull-right">Refresh</button>
+            <!--<button type="submit" name="submit" value ="update" class="btn btn-sm btn-primary pull-right">Refresh</button>-->
             <!--<button type="submit" name="submit" value ="export" class="btn btn-sm btn-primary pull-right ">CSV</button>-->
-            <button type="submit" name="submit" value ="report" class="btn btn-sm btn-primary pull-right ">Report</button>
+            <!--<button type="submit" name="submit" value ="report" class="btn btn-sm btn-primary pull-right ">Report</button>-->
            <input type="hidden" name="svgimg" id="svgimg" value="0">
            <input type="hidden" name="svgimg2" id="svgimg2" value="0">
            <input type="hidden" name="svgimg3" id="svgimg3" value="0">
@@ -285,10 +282,8 @@ google.maps.event.addDomListener(window, 'load', initialize);
            <input type="hidden" name="sum_expt" id="sum_expt" value="0">   
            <input type="hidden" name="daily_img" id="daily_img" value="0">   
 
-           <P>&nbsp;</P>
-
         </form>
-        </div>
+    </div>
 
   </div> <!-- col -->
 
