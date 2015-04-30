@@ -11,11 +11,7 @@
       }
     </style>
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAAycqDtBxmyKFTh7AcRuqGpd4TkqtcWGI"></script>
-
     <script>
-
-
-
 
 $.ajax({
     url:'../img/company/<%-accountname%>.jpg',
@@ -30,14 +26,6 @@ $.ajax({
 $(".companylogoalt").hide();
     }
 });
-
-
-
-
-
-// Note: This example requires that you consent to location sharing when
-// prompted by your browser. If you see a blank space instead of the map, this
-// is probably because you have denied permission for location sharing.
 
 var map;
 var assets = <%- JSON.stringify(assets) %>;
@@ -232,32 +220,9 @@ google.maps.event.addDomListener(window, 'load', initialize);
 
 
 
-
-
     </div>
   </div>
     <div class="col-sm-3"> <!-- multiple boxes here -->
-     <div class="well">
-<iframe id="forecast_embed" type="text/html" frameborder="0" height="245" width="100%" src="http://forecast.io/embed/#lat=1.283333&lon=-103.833333&name=Singapore&units=ca"> </iframe></div>
-
-     <div class="well">
-
-     <div class="savings_icon"><i class="fa fa-car"></i></div>
-       <div class="savings">
-         <h5>CO<sub>2</sub> Emissions Saved</h5>
-         <div class="co2_emissions"></div>
-       </div>
-
-       <div class="savings_icon"><i class="fa fa-pagelines"></i></div>
-       <div class="savings">
-        <h5>Trees Planted</h5>
-        <div class="trees"></div>
-      </div>
-
-    </div>
-
-
-
       <div class="well">
         <p class="lead">Parameters</p>
       <form action="/account/<%=accountname%>" name="data"  id="data" method="post">
@@ -287,42 +252,6 @@ google.maps.event.addDomListener(window, 'load', initialize);
   </div> <!-- col -->
 
 
-</div> <!-- row -->
-
-
-<div class="row"> <!-- third row -->
-    <div class="col-sm-6">
-      <div class="well">
-        <p class="lead">Meter Locations</p>
-        <div id="map-canvas"></div>
-      </div>
-    </div>
-    <div class="col-sm-6">
-          <div class="well">
-            <p class="lead"> Meter List</p>
-        <table class="table">
-             <thead>
-            <tr>
-              <td><strong>Name</strong></td>
-              <td><strong>ID</strong></td>
-              <td><strong>Address</strong></td>
-              <td><strong>Lat & Long</strong></td>
-            </tr>
-            </thead>
-        <% assets.forEach(function(err, index) {%>
-            <tr>
-              <td><%=assets[index].assetname%></td>
-              <td><%=assets[index].assetid%></td>
-              <td><%=assets[index].street%>, <%=assets[index].postcode%></td>
-              <td><%=assets[index].lat%>, <%=assets[index].lng%></td>
-
-            </tr>
-
-        <% });%>
-       </table>
-          </div>
-
-    </div>
 </div> <!-- row -->
 
 </div>
