@@ -161,11 +161,11 @@ google.maps.event.addDomListener(window, 'load', initialize);
     </div><!-- col -->
 
     <div class="col-sm-3">
-      <div class="well">
-        <form name="logoform" id="logoform" method="post" enctype="multipart/form-data" action="/account/file-upload/<%=accountname%>">
+      <div class="well" >
+        <form name="logoform" id="logoform" method="post" style="height:67px !important" enctype="multipart/form-data" action="/account/file-upload/<%=accountname%>">
             <input type="file" name="image" id="form_img_file">
             <a class="no_link" onclick="document.getElementById('form_img_file').click();">
-              <img class="companylogo" src="../img/company/<%=accountname%>.jpg" style="width: 100%">
+              <img class="companylogo" src="../img/company/<%=accountname%>.jpg" style="max-height:100%; max-width:100%">
               <p class="lead companylogoalt"><%=accountname%></p>
             </a>
         </form>

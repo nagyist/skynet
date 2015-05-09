@@ -2,108 +2,9 @@
 <!doctype html>
 <html>
 <head><% include /partials/head %>
-
-    <style>
-      #map-canvas {
-        height:400px;
-        margin: 0px;
-        padding: 0px
-      }
-    </style>
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAAycqDtBxmyKFTh7AcRuqGpd4TkqtcWGI"></script>
     <script>
 
-$.ajax({
-    url:'../img/company/<%-accountname%>.jpg',
-    type:'HEAD',
-    error: function()
-    {
-    $(".companylogo").hide();
-    $(".companylogoalt").show();
-    },
-    success: function()
-    {
-$(".companylogoalt").hide();
-    }
-});
-
-var map;
-var assets = <%- JSON.stringify(assets) %>;
-
-
-function initialize() {
-  var mapOptions = {
-    zoom: 15
-  };
-  map = new google.maps.Map(document.getElementById('map-canvas'),
-      mapOptions);
-  var center = new google.maps.LatLng(1.411492,103.871093);
-  map.setCenter(center);
-
-  var bounds = new google.maps.LatLngBounds();
-  var marker, i;
-  var assets = <%- JSON.stringify(assets) %>;
-  var infowindow = new google.maps.InfoWindow();
-  for (i = 0; i < assets.length; i++) {  
-
-    if (assets[i].lat){
-
-    marker = new google.maps.Marker({
-           position: new google.maps.LatLng(assets[i].lat, assets[i].lng),
-           title:assets[i].assetname,
-            map: map
-    });
-
-    bounds.extend(marker.position);
-
-    
-
-    google.maps.event.addListener(marker, 'click', (function(marker, i) {
-      return function() {
-        infowindow.setContent('<a href="/viewlivedata/'+assets[i].assetid+'">'+assets[i].assetname+' </a>');
-        infowindow.open(map, marker);
-      }
-    })(marker, i));
-    }
-  }
-
-map.fitBounds(bounds);
-}
-function handleNoGeolocation(errorFlag) {
-  if (errorFlag) {
-    var content = 'Error: The Geolocation service failed.';
-  } else {
-    var content = 'Error: Your browser doesn\'t support geolocation.';
-  }
-
-  var options = {
-    map: map,
-    position: new google.maps.LatLng(1.3147308,103.8470128),
-    content: content
-  };
-
-  var infowindow = new google.maps.InfoWindow(options);
-  map.setCenter(options.position);
-}
-
-/*
-  var address = document.getElementById('address').value;
-  geocoder.geocode( { 'address': address}, function(results, status) {
-    if (status == google.maps.GeocoderStatus.OK) {
-      map.setCenter(results[0].geometry.location);
-      var marker = new google.maps.Marker({
-          map: map,
-          position: results[0].geometry.location
-      });
-    } else {
-      alert('Geocode was not successful for the following reason: ' + status);
-    }
-  });
-
-*/
-
-
-google.maps.event.addDomListener(window, 'load', initialize);
+    var assets = <%- JSON.stringify(assets) %>;
 
     </script>
 </head>
@@ -118,114 +19,20 @@ google.maps.event.addDomListener(window, 'load', initialize);
     <div class="alert alert-info"><%- message %>  <button type="button" class="close" data-dismiss="alert">&times;</button></div>
   <% } %>
 
-  <!--<div class="page-header text-center">
-    <h3>Account Overview - <%=accountname%></h3>
-  </div>-->
-<div class="row">
-    <!-- LOCAL INFORMATION -->
-    <div class="col-sm-9">      
-      <div class="well" style="min-height:107px">
-        <div class="col-sm-4">
-        <h5>Current Power</h5>
-        <div class="power"></div>
-        </div>
+  <div class="page-header">
+    <h3>Generate Ad-hoc Report</h3>
+  </div>
 
-        <div class="col-sm-4">
-          <h5>Total Import</h5>
-          <div class="totimport"></div>
-        </div>
-
-        <div class="col-sm-4">
-          <h5>Total Export</h5>
-          <div class="totexport"></div>
-        </div>
-      </div>
-    </div><!-- col -->
-
-    <div class="col-sm-3">
-      <div class="well">
-        <form name="logoform" id="logoform" method="post" enctype="multipart/form-data" action="/account/file-upload/<%=accountname%>">
-            <input type="file" name="image" id="form_img_file">
-            <a class="no_link" onclick="document.getElementById('form_img_file').click();">
-              <img class="companylogo" src="../img/company/<%=accountname%>.jpg" style="width: 100%">
-              <p class="lead companylogoalt"><%=accountname%></p>
-            </a>
-        </form>
-      </div>
-      <!--<div class="well hello" style="display:none;">
-          <form name="logoform" id="logoform" method="post" enctype="multipart/form-data" action="/account/file-upload/<%=accountname%>">
-              <input type="file" name="image" id="form_img_file">
-              <a onclick="document.getElementById('form_img_file').click();"><p class="lead text-center"><i class="fa fa-cloud-upload"></i> Add Image</p></a>
-          </form>
-      </div>
-      -->
-    </div>
-
-</div> <!-- row -->
 
 
 <div class="row"> <!-- second row -->
 
- <!-- <div class="col-sm-6">
-    <div class="well">
-      <p class="lead"> Energy Generation Profile</p>-->
-      <!--<div class="ct-chart" id="chart1"></div>-->
-   <!-- </div>
-  </div>-->
 
 
-  <div class="col-sm-9">
-    <div class="well">
-  <div role="tabpanel">
-    <!-- Nav tabs -->
-    <ul class="nav nav-pills " role="tablist">
-      <li class="active"><a id="tab0" href="#hourly" aria-controls="hourly" role="tab" data-toggle="tab">Hourly</a></li>
-      <li class=""><a id="tab1" href="#daily" aria-controls="daily" role="tab" data-toggle="tab">Daily</a></li>
-      <li class=""><a id="tab2" href="#weekly" aria-controls="weekly" role="tab" data-toggle="tab">Weekly</a></li>
-      <li class=""><a id="tab3" href="#monthly" aria-controls="monthly" role="tab" data-toggle="tab">Monthly</a></li>
-    </ul>
-
-    <!-- Tab panes -->
-    <div class="tab-content">
-      <div role="tabpanel" class="tab-pane active" id="hourly">
-        <p class="lead"> Hourly Energy Generated / Used (kWh)</p>
-        <canvas id="myChart0"></canvas>
-        <div id="myChart0-legend" class="chart-legend"></div>
-      </div>
-      <div role="tabpanel" class="tab-pane active" id="daily">
-        <p class="lead"> Daily Energy Generated / Used (kWh)</p>
-        <canvas id="myChart1"></canvas>
-        <div id="myChart1-legend" class="chart-legend"></div>
-      </div>
-      <div role="tabpanel" class="tab-pane active" id="weekly">
-        <p class="lead"> Weekly Energy Generated / Used (kWh)</p>
-        <canvas id="myChart2"></canvas>
-        <div id="myChart2-legend" class="chart-legend"></div>
-
-      </div>
-      <div role="tabpanel" class="tab-pane active" id="monthly">
-        <p class="lead"> Monthly Energy Generated / Used (kWh)</p>
-        <canvas id="myChart3"></canvas>
-        <div id="myChart3-legend" class="chart-legend"></div>
-      </div>
-    </div>
-
-  </div>
-
-
-
-
-
-
-
-
-
-    </div>
-  </div>
-    <div class="col-sm-3"> <!-- multiple boxes here -->
+    <div class="col-sm-12"> <!-- multiple boxes here -->
       <div class="well">
-        <p class="lead">Parameters</p>
-      <form action="/account/<%=accountname%>" name="data"  id="data" method="post">
+        <p class="lead">Date</p>
+      <form action="/createreport/<%=accountname%>" name="data"  id="data" method="post">
 
           <input value="<%=accountname%>" type="hidden" name="accountname">
           <div class="form-group input-daterange input-group pull-left" id="datepicker">
@@ -240,17 +47,42 @@ google.maps.event.addDomListener(window, 'load', initialize);
            <input type="hidden" name="svgimg2" id="svgimg2" value="0">
            <input type="hidden" name="svgimg3" id="svgimg3" value="0">
 
-          <input type="hidden" name="sum_impt" id="sum_impt" value="0">
-           <input type="hidden" name="sum_expt" id="sum_expt" value="0">   
-           <input type="hidden" name="daily_img" id="daily_img" value="0">   
+           <input type="hidden" name="totdailyimport" id="totdailyimport" value="0">
+           <input type="hidden" name="totdailyexport" id="totdailyexport" value="0">
 
-           <P>&nbsp;</P>
+           <input type="hidden" name="totmonthlyimport" id="totmonthlyimport" value="0">
+           <input type="hidden" name="totmonthlyexport" id="totmonthlyexport" value="0">   
+
+           <input type="hidden" name="dailygraph" id="dailygraph" value="0">   
+           <input type="hidden" name="monthlygraph" id="monthlygraph" value="0">   
+
+           <p> &nbsp; </p>
 
         </form>
         </div>
 
   </div> <!-- col -->
 
+
+
+      <div class="col-sm-6">
+          <div class="well">
+              <p class="lead"> Daily Energy Generated / Used (kWh)</p>
+              <canvas id="myChart1" style="padding-right: 30px;"></canvas>
+              <div id="myChart1-legend" class="chart-legend" ></div>
+          </div>
+      </div>
+
+      <div class="col-sm-6">
+          <div class="well">
+              <p class="lead"> Monthly Energy Generated / Used (kWh)</p>
+              <canvas id="myChart3" style="padding-right: 30px;"></canvas>
+              <div id="myChart3-legend" class="chart-legend" ></div>
+          </div>
+      </div>
+
+    </div>
+  </div>
 
 </div> <!-- row -->
 
@@ -261,178 +93,20 @@ google.maps.event.addDomListener(window, 'load', initialize);
 
 <script type="text/javascript">
 
-
-</script>
-
-
-
-<script type="text/javascript">
-
-//$(".logobox").mouseover(function() { $(".hello").css('display','block'); $(".logobox").css('display','none'); });
-//$(".hello").mouseover(function() { $(".hello").css('display','block'); $(".logobox").css('display','none'); });
-//$(".hello").mouseout(function() { $(".hello").css('display','none'); $(".logobox").css('display','block'); });
-
-
-document.getElementById("form_img_file").onchange = function() {
-    document.getElementById("logoform").submit();
-};
-
-
-/*
-if ($(".companylogo").attr('src') == "") {
-    $(".companylogo").hide();
-    $(".companylogoalt").show();
-}
-else {
-    $(".companylogo").show();
-    $(".companylogoalt").hide();
-}
-*/
 // datepicker
 
 
 $('.input-daterange').datepicker({
-    format: 'dd/mm/yyyy',
-    endDate:'+1d'
+    format: 'yyyy-mm-dd',
+    //endDate:'+1d'
 })
 
-// data select
-var data = <%- JSON.stringify(data) %>;
-var engimpt = [];
-var engexpt = [];
-var label = [];
-//var totexport =  -(data[data.length-1].Energy_Importing - data[1].Energy_Importing)*1000; // import means export
-//var totimport = -(data[data.length-1].Energy_Exporting - data[1].Energy_Exporting)*1000;
 
+// chart options
 
-data[0].forEach(function(err, index) {
-
-  label.push(data[0][index].day1+'/'+data[0][index].month1);
-  engimpt.push(data[0][index].eng_import_diff);
-  engexpt.push(data[0][index].eng_export_diff);
-
-});
-
-var totexport = engimpt.reduce( function(total, num){ return total + num }, 0);
-var totimport = engexpt.reduce( function(total, num){ return total + num }, 0);
-
-// environmental conversions
-
-//23.2 lbs C/tree × (44 units CO2 ÷ 12 units C) × 1 metric ton ÷ 2,204.6 lbs = 0.039 metric ton CO2 per urban tree planted
-// 6.89551 × 10-4 metric tons CO2 / kWh 1 metric ton = 1000kg
-// 1kwh * 6.89551 * 10^-4 T / 1kwh * 10^3 kg / 1 T = 6.89551 * 10-1 = .689551
-
-//0.039 metric ton CO2 per urban tree planted
-//1kwh * 6.89551 * 10^-4 T / 1kwh * 1 tree / 0.039 T
-
-
-// old conversion = 0.523
-
-var co2_emissions = totimport * 0.689551; // kwh to kg CO2
-
-var trees = totimport * 0.01768079487; // kwh to average tree
-
-var power = <%- JSON.stringify(power) %>;
-
-$('div.power').html("<p class='lead'>"+Math.round(power[0][0].Total*100)/100+" W</p>");
-$('div.totexport').html("<p class='lead'>"+Math.round(totexport*100)/100+" kWh</p>");
-$('div.totimport').html("<p class='lead'>"+Math.round(totimport*100)/100+" kWh</p>");
-$('div.co2_emissions').html("<p class='lead'>"+Math.round(co2_emissions*100)/100+" kg</p>");
-$('div.trees').html("<p class='lead'>"+Math.round(trees*100)/100+" trees</p>");
-
-// end environmental conversions
-
-// hourly select
-var hourly = <%- JSON.stringify(hourly) %>;
-var hourlyimpt = [];
-var hourlyexpt = [];
-var hourlylabel = [];
-
-hourly[0].forEach(function(err, index) {
-  hourlylabel.push(hourly[0][index].hour1+':00');
-  hourlyimpt.push(hourly[0][index].eng_import_diff);
-  hourlyexpt.push(hourly[0][index].eng_export_diff);
-
-});
-
-var tothourexport = hourlyimpt.reduce( function(total, num){ return total + num }, 0);
-var tothourimport = hourlyexpt.reduce( function(total, num){ return total + num }, 0);
-
-    var hourlydata = {
-        labels: hourlylabel,
-        datasets: [
-            {
-                label: "Import",
-                fillColor: "rgba(220,220,220,0.2)",
-                strokeColor: "rgba(220,220,220,1)",
-                pointColor: "rgba(220,220,220,1)",
-                pointStrokeColor: "#fff",
-                pointHighlightFill: "#fff",
-                pointHighlightStroke: "rgba(220,220,220,1)",
-                //highlightFill: "rgba(220,220,220,1)",
-                //highlightStroke: "rgba(220,220,220,1)",
-                data: hourlyimpt
-            },
-            {
-                label: "Export",
-                fillColor: "rgba(151,187,205,0.2)",
-                strokeColor: "rgba(151,187,205,1)",
-                pointColor: "rgba(151,187,205,1)",
-                pointStrokeColor: "#fff",
-                pointHighlightFill: "#fff",
-                pointHighlightStroke: "rgba(151,187,205,1)",
-                //highlightFill: "rgba(151,187,205,1)",
-                //highlightStroke: "rgba(151,187,205,1)",
-                data: hourlyexpt
-            }
-        ]
-    };
-
-
-// end hourly select
-
-
-// weekly select
-var weekly = <%- JSON.stringify(weekly) %>;
-var weeklyimpt = [];
-var weeklyexpt = [];
-var weeklylabel = [];
-
-weekly[0].forEach(function(err, index) {
-
-  weeklylabel.push('W'+weekly[0][index].week1);
-  weeklyimpt.push(weekly[0][index].eng_import_diff);
-  weeklyexpt.push(weekly[0][index].eng_export_diff);
-
-});
-
-var totweekexport = weeklyimpt.reduce( function(total, num){ return total + num }, 0);
-var totweekimport = weeklyexpt.reduce( function(total, num){ return total + num }, 0);
-
-    var weeklydata = {
-        labels: weeklylabel,
-        datasets: [
-            {
-                label: "Import",
-                fillColor: "rgba(220,220,220,1)",
-                strokeColor: "rgba(220,220,220,1)",
-                highlightFill: "rgba(220,220,220,1)",
-                highlightStroke: "rgba(220,220,220,1)",
-                data: weeklyimpt
-            },
-            {
-                label: "Export",
-                fillColor: "rgba(151,187,205,1)",
-                strokeColor: "rgba(151,187,205,1)",
-                highlightFill: "rgba(151,187,205,1)",
-                highlightStroke: "rgba(151,187,205,1)",
-                data: weeklyexpt
-            }
-        ]
-    };
-
-
-// end weekly select
+var chart_options = {
+    responsive: true
+};
 
 // monthly select
 var monthly = <%- JSON.stringify(monthly) %>;
@@ -451,182 +125,122 @@ monthly[0].forEach(function(err, index) {
 var totmonthlyexport = monthlyimpt.reduce( function(total, num){ return total + num }, 0);
 var totmonthlyimport = monthlyexpt.reduce( function(total, num){ return total + num }, 0);
 
-    var monthlydata = {
-        labels: monthlylabel,
-        datasets: [
-            {
-                label: "Import",
-                fillColor: "rgba(220,220,220,1)",
-                strokeColor: "rgba(220,220,220,1)",
-                highlightFill: "rgba(220,220,220,1)",
-                highlightStroke: "rgba(220,220,220,1)",
-                data: monthlyimpt
-            },
-            {
-                label: "Export",
-                fillColor: "rgba(151,187,205,1)",
-                strokeColor: "rgba(151,187,205,1)",
-                highlightFill: "rgba(151,187,205,1)",
-                highlightStroke: "rgba(151,187,205,1)",
-                data: monthlyexpt
-            }
-        ]
-    };
+var monthlydata = {
+    labels: monthlylabel,
+    datasets: [
+        {
+            label: "Import",
+            fillColor: "rgba(220,220,220,1)",
+            strokeColor: "rgba(220,220,220,1)",
+            highlightFill: "rgba(220,220,220,1)",
+            highlightStroke: "rgba(220,220,220,1)",
+            data: monthlyimpt
+        },
+        {
+            label: "Export",
+            fillColor: "rgba(151,187,205,1)",
+            strokeColor: "rgba(151,187,205,1)",
+            highlightFill: "rgba(151,187,205,1)",
+            highlightStroke: "rgba(151,187,205,1)",
+            data: monthlyexpt
+        }
+    ]
+};
 
+// end monthly select
 
+// daily select
+var daily = <%- JSON.stringify(daily) %>;
+var dailyimpt = [];
+var dailyexpt = [];
+var dailylabel = [];
 
-// end weekly select
+daily[0].forEach(function(err, index) {
 
+if(index % Math.floor(daily[0].length/5) == 0) {
+  dailylabel.push( daily[0][index].day1+'-'+daily[0][index].month1);
+} else {
+  dailylabel.push('');
+}
+  dailyimpt.push(daily[0][index].eng_import_diff);
+  dailyexpt.push(daily[0][index].eng_export_diff);
 
-// This is for the reports
-
-var sum = <%- JSON.stringify(sum) %>;
-var sum_length = sum.length;
-var sumimpt = [];
-var sumexpt = [];
-var sumlabel = [];
-
-sum.forEach(function(err, index) {
-
-  sumlabel.push(sum[index].month+'-'+sum[index].day);
-  if (index == 0) {
-  sumimpt.push(0);
-  sumexpt.push(0);
-
-  } else {
-  sumimpt.push((sum[index].Energy_Importing-sum[index-1].Energy_Importing)*1000);
-  sumexpt.push((sum[index].Energy_Exporting-sum[index-1].Energy_Exporting)*1000);
-  }
 });
 
-document.data.sum_expt.value = sumimpt.reduce(function(pv, cv) { return pv + cv; }, 0);
-document.data.sum_impt.value = sumexpt.reduce(function(pv, cv) { return pv + cv; }, 0);
+var totdailyexport = dailyimpt.reduce( function(total, num){ return total + num }, 0);
+var totdailyimport = dailyexpt.reduce( function(total, num){ return total + num }, 0);
 
-// end report data
-
-    var chart_options = {
-        responsive: true
-    };
-
-
-    var data = {
-        labels: label,
+    var dailydata = {
+        labels: dailylabel,
         datasets: [
             {
                 label: "Import",
-                fillColor: "rgba(220,220,220,1)",
+                fillColor: "rgba(0,0,0,0)",
                 strokeColor: "rgba(220,220,220,1)",
-                highlightFill: "rgba(220,220,220,1)",
-                highlightStroke: "rgba(220,220,220,1)",
-                data: engimpt
+                pointColor: "rgba(220,220,220,1)",
+                pointStrokeColor: "#fff",
+                pointHighlightFill: "#fff",
+                pointHighlightStroke: "rgba(220,220,220,1)",
+                //highlightFill: "rgba(220,220,220,1)",
+                //highlightStroke: "rgba(220,220,220,1)",
+                data: dailyimpt
             },
             {
                 label: "Export",
-                fillColor: "rgba(151,187,205,1)",
+                fillColor: "rgba(0,0,0,0)",
                 strokeColor: "rgba(151,187,205,1)",
-                highlightFill: "rgba(151,187,205,1)",
-                highlightStroke: "rgba(151,187,205,1)",
-                data: engexpt
+                pointColor: "rgba(151,187,205,1)",
+                pointStrokeColor: "#fff",
+                pointHighlightFill: "#fff",
+                pointHighlightStroke: "rgba(151,187,205,1)",
+                //highlightFill: "rgba(151,187,205,1)",
+                //highlightStroke: "rgba(151,187,205,1)",
+                data: dailyexpt
             }
         ]
     };
+// end daily select
 
 
 // Initialization of the Charts (*and destroy on each tab)
-
-    //var myChart = document.getElementById("myChart").getContext("2d");
-    //var myBarchart1 = new Chart(myChart).Bar(data, chart_options);
-
-
-      var ctx0 = $("#myChart0").get(0).getContext("2d");
-      var myBarchart0 = new Chart(ctx0).Line(hourlydata, chart_options);
-      document.getElementById('myChart0-legend').innerHTML = myBarchart0.generateLegend();
-
-
       var ctx1 = $("#myChart1").get(0).getContext("2d");
-      var myBarchart1 = new Chart(ctx1).Bar(data, chart_options);
-      document.getElementById('myChart1-legend').innerHTML = myBarchart1.generateLegend();
-
-      var ctx2 = $("#myChart2").get(0).getContext("2d");
-      var myBarchart2 = new Chart(ctx2).Bar(weeklydata, chart_options);
-      document.getElementById('myChart2-legend').innerHTML = myBarchart2.generateLegend();
-
+      var myLinechart1 = new Chart(ctx1).Line(dailydata, chart_options);
+      document.getElementById('myChart1-legend').innerHTML = myLinechart1.generateLegend();
 
       var ctx3 = $("#myChart3").get(0).getContext("2d");
       var myBarchart3 = new Chart(ctx3).Bar(monthlydata, chart_options);
       document.getElementById('myChart3-legend').innerHTML = myBarchart3.generateLegend();
 
+// saving data to form data for push to reports
 
-/*
-      $('a#tab1[data-toggle="tab"]').click(function (e) {
-        e.preventDefault()
-        $(this).tab('show')
-      });
+    // 12-month import/export
+    document.data.totmonthlyimport.value = totmonthlyexport;
+    document.data.totmonthlyimport.value = totmonthlyimport;
 
+    // period import/export
+    document.data.totdailyexport.value = totdailyexport;
+    document.data.totdailyimport.value = totdailyimport;
 
-     $('a#tab2[data-toggle="tab"]').click(function (e) {
-        e.preventDefault()
-        $(this).tab('show')
-      });
+// when everything is loaded
+    console.log('not finished loading');
 
-     $('a#tab3[data-toggle="tab"]').click(function (e) {
-        e.preventDefault()
-        $(this).tab('show')
-      });
-*/
+setTimeout(function(){
+  
+    var dailyCanvas = document.getElementById("myChart1");
+    console.log('dc ', dailyCanvas);
+    var a = dailyCanvas.toDataURL("image/png");
+    console.log('a ',a);
 
-      $('a#tab0[data-toggle="tab"]').on('shown.bs.tab', function (e) {
-          e.target // newly activated tab
-          e.relatedTarget // previous active tab
-          myBarchart2.destroy();
-          myBarchart3.destroy();
-          myBarchart1.destroy();
-          myBarchart0 = new Chart(ctx0).Line(hourlydata, chart_options);
-      });
+    document.data.dailygraph.value = a;
 
 
-      $('a#tab1[data-toggle="tab"]').on('shown.bs.tab', function (e) {
-          e.target // newly activated tab
-          e.relatedTarget // previous active tab
-          myBarchart2.destroy();
-          myBarchart3.destroy();
-          myBarchart0.destroy();
-          myBarchart1 = new Chart(ctx1).Bar(data, chart_options);
-      });
-
-      $('a#tab2[data-toggle="tab"]').on('shown.bs.tab', function (e) {
-          e.target // newly activated tab
-          e.relatedTarget // previous active tab
-          myBarchart1.destroy();
-          myBarchart3.destroy();
-          myBarchart0.destroy();
-          myBarchart2 = new Chart(ctx2).Bar(weeklydata, chart_options);
-      });
-
-      $('a#tab3[data-toggle="tab"]').on('shown.bs.tab', function (e) {
-          e.target // newly activated tab
-          e.relatedTarget // previous active tab
-          myBarchart1.destroy();
-          myBarchart2.destroy();
-          myBarchart0.destroy();
-          myBarchart3 = new Chart(ctx3).Bar(monthlydata, chart_options);
-      });
-
-    $(window).load(function() {
-    /** this is come when complete page is fully loaded, including all frames, objects and images **/
-    $('div#weekly').removeClass('active');
-    $('div#monthly').removeClass('active');
-    $('div#daily').removeClass('active');
-    });
-    // for report export (move this later)
-
-    var chartCanvas = document.getElementById("myChart1");
-    var a = chartCanvas.toDataURL();
-
-    document.data.daily_img.value = a;
+    var monthlyCanvas = document.getElementById("myChart3");
+    var b = monthlyCanvas.toDataURL("image/png");
+    document.data.monthlygraph.value = b;
+    console.log('everythng is loaded now');
+}, 3000);
     //console.log(a);
     //console.log(document.data.daily_img.value);
-
 
 
 </script>

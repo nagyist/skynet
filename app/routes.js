@@ -517,7 +517,7 @@ app.post('/editprofile',isLoggedIn, function(req, res, next ) {
 
 
 	// =====================================
-	// VIEW USERS SECTION =========================
+	// VIEW USERS SECTION ==================
 	// =====================================
 	// this lets you view users in your account
 	app.get('/viewuser/:accountname', isLoggedIn, function(req, res) {
@@ -1106,22 +1106,39 @@ app.post('/account/file-upload/:accountname', function(req, res, next) {
   app.get('/createreport/:accountname', isLoggedIn, function(req, res) {
 
   // provides start and end date for the report
-  var startdate = moment(new Date()).subtract(8,'d').format("YYYY-MM-DD 00:00:00");
+  var startdate = moment(new Date()).subtract(30,'d').format("YYYY-MM-DD 00:00:00");
   var enddate = moment(new Date()).add(1,'d').format("YYYY-MM-DD 00:00:00");
+  var startmonth = moment(new Date()).subtract(12,'months').startOf('month').format("YYYY-MM-DD 00:00:00");
 
+    pool.getConnection(function(err, connection) {
 
-    res.render('createreport.ejs', {
-      moment:moment,
-      sum: sum,
-      data: rows,
-      header:headers,
-      accountname: req.params.accountname,
-      assets:assets,
-      start: req.body.start,
-      end: req.body.end,
-      message:''
-    });
+      connection.query("call custom_daily_gen_by_account(?,?,?) ",[req.params.accountname,startdate,enddate], function(err, daily) {
+          connection.query("call custom_monthly_gen_by_account(?,?,?) ",[req.params.accountname,startmonth,enddate], function(err, monthly) {
+            connection.query("select fa.assetid, da.assetname, da.street, da.postcode, da.remarks, da.lat, da.lng, dac.accountid, dac.accountname from f_asset fa \
+                            left join d_asset da on fa.assetid = da.assetid left join d_accounts dac on fa.accountid = dac.accountid where dac.accountname = ?",req.params.accountname, function(err, assets) {
 
+          console.log(daily);
+          console.log(monthly);
+          console.log(assets);
+          console.log(startdate);
+          console.log(enddate);
+
+              res.render('createreport.ejs', {
+                moment:moment,
+                daily: daily,
+                monthly: monthly,
+                accountname: req.params.accountname,
+                assets:assets,
+                start: startdate,
+                end: enddate,
+                message:''
+              });
+
+            }); // assets
+          }); // monthly
+        }); // daily
+
+    }); // create pool
   }); // create report
 
 
@@ -1130,13 +1147,16 @@ app.post('/account/file-upload/:accountname', function(req, res, next) {
   app.post('/createreport/:accountname', isLoggedIn, function(req, res) {
 
   // pulls in the start and end date from the page / this should be date-time
-  var startdate = moment(req.body.start,'DD/MM/YYYY').format("YYYY-MM-DD 00:00:00");
-  var enddate = moment(req.body.end,'DD/MM/YYYY').format("YYYY-MM-DD 00:00:00");
+  var startdate = moment(req.body.start,'YYYY-MM-DD').format("YYYY-MM-DD 00:00:00");
+  var enddate = moment(req.body.end,'YYYY-MM-DD').format("YYYY-MM-DD 00:00:00");
+  var startmonth = moment(req.body.start,'YYYY-MM-DD').subtract(12,'months').startOf('month').format("YYYY-MM-DD 00:00:00");
 
     // this is for an export of the data to excel
     if(req.body.submit == "export") {
 
     pool.getConnection(function(err, connection) {
+
+    // this is disabled vvvvvvvvvvvvvvvvvv
       if(err) { console.log(err); return; }
 
       connection.query("select * from MeterLog left join d_asset on d_asset.assetid = MeterLog.MeterNo WHERE d_asset.assetid = ? and MeterLog.TimeStamp between ? and ? order by MeterLog.TimeStamp",[req.params.assetid,startdate,enddate], function(err, rows) {
@@ -1149,52 +1169,39 @@ app.post('/account/file-upload/:accountname', function(req, res, next) {
         res.csv(rows);
       });
     });
-
+    // this is disabled ^^^^^^^^^^^^^^^^^^^
     // this is to update any parameters on the page
     } else if(req.body.submit == "update") {
 
     pool.getConnection(function(err, connection) {
       if(err) { console.log(err); return; }
 
+      connection.query("call custom_daily_gen_by_account(?,?,?) ",[req.params.accountname,startdate,enddate], function(err, daily) {
+          connection.query("call custom_monthly_gen_by_account(?,?,?) ",[req.params.accountname,startmonth,enddate], function(err, monthly) {
 
-    connection.query("select m.ClientFK, m.MeterNo, m.TimeStamp, m.TotalActiveDemand_3P, m.TotalReactiveDemand_3P, m.PhaseVoltage_L1, m.PhaseCurrent_I3, \
-                       m.PhaseVoltage_L2, m.PhaseVoltage_L3, m.LineVoltage_L12, m.LineVoltage_L31, m.LineVoltage_L23, m.PhaseCurrent_I1, m.PhaseCurrent_I2, \
-                       m.TotalApparentPower_3P, m.TotalActivePower_3P, m.TotalReactivePower_3P, m.PhasePowerFactor_3P, m.SystemFrequency, m.Energy_Total, \
-                       (PhaseVoltage_L1*PhaseCurrent_I1 + PhaseVoltage_L2*PhaseCurrent_I2 + PhaseVoltage_L2*PhaseCurrent_I2)/1000*PhasePowerFactor_3P/10 as Energy_Importing_Calc, \
-                       m.Energy_Importing, m.Energy_Exporting, da.assetname, da.assetid from MeterLog m left join d_asset da on da.assetid = m.MeterNo \
-                       left join f_asset fa on fa.assetid = da.assetid left join d_accounts dac on dac.accountid = fa.accountid \
-                       WHERE dac.accountname = ? and m.TimeStamp between ? and ? order by m.TimeStamp desc ",[req.params.accountname,startdate,enddate], function(err, rows) {
-      
-      connection.query("select fa.assetid, da.assetname, da.street, da.postcode, da.remarks, da.lat, da.lng, dac.accountid, dac.accountname from f_asset fa \
-                      left join d_asset da on fa.assetid = da.assetid left join d_accounts dac on fa.accountid = dac.accountid where dac.accountname = ?",req.params.accountname, function(err, assets) {
-        //console.log(rows);
+            connection.query("select fa.assetid, da.assetname, da.street, da.postcode, da.remarks, da.lat, da.lng, dac.accountid, dac.accountname from f_asset fa \
+                            left join d_asset da on fa.assetid = da.assetid left join d_accounts dac on fa.accountid = dac.accountid where dac.accountname = ?",req.params.accountname, function(err, assets) {
 
-        connection.query("select DAY(m.timestamp) as day,Month(m.timestamp) as month, Year(m.timestamp) as year, \
-                          m.Energy_Importing, m.Energy_Exporting from MeterLog m left join d_asset da on da.assetid = m.MeterNo \
-                          left join f_asset fa on fa.assetid = da.assetid left join d_accounts dac on dac.accountid = fa.accountid \
-                          WHERE dac.accountname = ? and m.Timestamp between ? and ? \
-                          group by year, month, day order by m.TimeStamp asc",[req.params.accountname,startdate,enddate], function(err, sum) {
+          console.log(daily);
+          console.log(monthly);
+          console.log(assets);
+          console.log(startdate);
+          console.log(enddate);
 
+              res.render('createreport.ejs', {
+                moment:moment,
+                daily: daily,
+                monthly: monthly,
+                accountname: req.params.accountname,
+                assets:assets,
+                start: startdate,
+                end: enddate,
+                message:''
+              });
 
-          var headers = {};
-          for (key in rows[0]) {
-              headers[key] = key;
-          }
-          connection.release();
-          res.render('account.ejs', {
-            moment:moment,
-            sum: sum,
-            data: rows,
-            header:headers,
-            accountname: req.params.accountname,
-            assets:assets,
-            start: req.body.start,
-            end: req.body.end,
-            message:''
-          });
-        }); // query - sums
-      }); // query - assets
-    }); // query - rows
+            }); // assets
+          }); // monthly
+        }); // daily
 
     }); // pool
 
@@ -1205,13 +1212,8 @@ app.post('/account/file-upload/:accountname', function(req, res, next) {
    pool.getConnection(function(err, connection) {
       if(err) { console.log(err); return; }
 
-        connection.query("select MeterLog.Energy_Total, (MeterLog.PhaseVoltage_L1*MeterLog.PhaseCurrent_I1 + MeterLog.PhaseVoltage_L2*MeterLog.PhaseCurrent_I2 + MeterLog.PhaseVoltage_L2*MeterLog.PhaseCurrent_I2)/1000 as Energy_Importing, MeterLog.Energy_Exporting,MeterLog.TimeStamp, d_asset.assetid, d_asset.assetname from MeterLog left join d_asset on d_asset.assetid = MeterLog.MeterNo WHERE d_asset.assetid = ?  and MeterLog.TimeStamp between ? and ? order by MeterLog.TimeStamp desc",[req.params.assetid, startdate, enddate], function(err, rows) {
 
-          var energy_gen = 0;
-
-          rows.forEach(function(err, index) {
-            energy_gen = energy_gen + rows[index].Energy_Importing;
-          });
+        console.log('im in the report generation tool');
 
           var current_tariff = 0.2329;
           var grid_charge = 0.15;
@@ -1230,7 +1232,7 @@ app.post('/account/file-upload/:accountname', function(req, res, next) {
           var address6 = 'GST Reg No. '+'201107952W';
 
           var location = 'Blk 214 Jurong East St 21, Singapore 600214';
-          var text2 = 'Energy Generation for this Period: '+Math.round(req.body.sum_impt*1000)/1000+' kWh';
+          var text2 = 'Energy Generation for this Period: '+Math.round(req.body.totdailyimport*1000)/1000+' kWh';
 
           var dates = 'Generated between ' + req.body.start+ ' and ' + req.body.end;
           doc = new PDF({size:'A4'});  
@@ -1260,9 +1262,17 @@ app.post('/account/file-upload/:accountname', function(req, res, next) {
           doc.text(address4, 95, 130);             //adding the text to be written, 
           // header - right
 
-
+          var dailygraph = req.body.dailygraph;
+          //console.log(dailygraph);
           //console.log((req.body.daily_img));
-          doc.image(req.body.daily_img,40, 410);
+
+          doc.image(dailygraph,40, 410,{width:400});
+
+          //if i wanted to make it a buffer instead
+          //var dailybuffer = new Buffer(dailygraph.replace('data:image/png;base64,','') || '', 'base64');
+          //doc.image(dailybuffer);
+
+
 
           //doc.rect(10, 10, 575, 815); total width is 585 and height is 825
           //doc.rect(10, 10, 575, 200);
@@ -1274,12 +1284,12 @@ app.post('/account/file-upload/:accountname', function(req, res, next) {
           doc.rect(30, 450, 400, 280);
           doc.stroke();
 
-          doc.scale(0.7).translate(40,220);
-          doc.path(req.body.svgimg).stroke();
+          //doc.scale(0.7).translate(40,220);
+          //doc.path(req.body.svgimg).stroke();
 
-          doc.translate(0,420);
-          doc.path(req.body.svgimg2).stroke();
-          doc.path(req.body.svgimg3).stroke();
+          //doc.translate(0,420);
+          //doc.path(req.body.svgimg2).stroke();
+          //doc.path(req.body.svgimg3).stroke();
 
 
           doc.addPage({margin: 50,size:'A4'}) // invoice page 2
@@ -1303,10 +1313,7 @@ app.post('/account/file-upload/:accountname', function(req, res, next) {
           doc.text(address5, 95, 145);             //adding the text to be written, 
           doc.text(address6, 95, 160);             //adding the text to be written, 
 
-
-
           // address of the company
-
 
           // header - right
 
@@ -1330,8 +1337,6 @@ app.post('/account/file-upload/:accountname', function(req, res, next) {
           doc.text('BLK 214 Jurong East St 21', 400, 205);             //adding the text to be written, 
           doc.text('Singapore 600214', 400, 220);             //adding the text to be written, 
 
-
-
           // summary of charges box
           doc.rect(30, 200, 300, 115);
           doc.rect(250, 200, 80, 115);        
@@ -1349,19 +1354,16 @@ app.post('/account/file-upload/:accountname', function(req, res, next) {
           doc.text('Total Current Charges due on ' + req.body.end, 35, 280);   
           doc.font('Helvetica-Bold');
           doc.fontSize(10);
-
           doc.text('Total Amount Payable', 35, 300); 
-
           doc.fontSize(8);
           doc.font('Helvetica');
-
-
           doc.text('Payment received on or after '+moment(req.body.end,'DD/MM/YYYY').add(1,'d').format('DD MMM YYYY')+' may not be included in this bill', 30, 345);           
 
           // top row
           doc.text('CURRENT MONTH CHARGES', 40, 385);           
           doc.text('Electricity charges w/o Sunseap solar', 255, 380);           
-          doc.text('Electricity charges w/ Sunseap solar', 415, 380);           
+          doc.text('Electricity charges w/ Sunseap solar', 415, 380);  
+
           // second row
           doc.text('Electricity (kWh)', 175, 395);           
           doc.text('Effective Rate ($)', 255, 395);           
@@ -1381,8 +1383,6 @@ app.post('/account/file-upload/:accountname', function(req, res, next) {
           doc.rect(330, 390, 80, 15); // amount 
           doc.rect(410, 390, 80, 15); // effect
           doc.rect(490, 390, 80, 15); // amount
-
-
 
           // third row
           doc.rect(30, 405, 140, 60);  // current monthly charges
@@ -1404,8 +1404,8 @@ app.post('/account/file-upload/:accountname', function(req, res, next) {
           doc.text((current_tariff), 255, 455);           
 
           // amount
-          doc.text(Math.round(req.body.sum_impt * (current_tariff - grid_charge)*1000)/1000, 335, 440);           
-          doc.text(Math.round(req.body.sum_expt * (current_tariff)*1000)/1000, 335, 455);           
+          doc.text(Math.round(req.body.totdailyimport * (current_tariff - grid_charge)*1000)/1000, 335, 440);           
+          doc.text(Math.round(req.body.totdailyexport * (current_tariff)*1000)/1000, 335, 455);           
 
           //effective rates
           doc.text(current_tariff - grid_charge, 415, 440);           
@@ -1416,10 +1416,8 @@ app.post('/account/file-upload/:accountname', function(req, res, next) {
           doc.text(sp_rate * (1 - discount), 415, 455);           
 
           // amount
-          doc.text(Math.round(req.body.sum_impt * (current_tariff - grid_charge)*1000)/1000, 495, 440);           
-          doc.text(Math.round(req.body.sum_expt * (sp_rate * (1 - discount))*1000)/1000, 495, 455);           
-
-
+          doc.text(Math.round(req.body.totdailyimport * (current_tariff - grid_charge)*1000)/1000, 495, 440);           
+          doc.text(Math.round(req.body.totdailyexport * (sp_rate * (1 - discount))*1000)/1000, 495, 455);           
 
           // fourth row
           doc.rect(30, 465, 140, 40);  // current monthly charges
@@ -1434,11 +1432,8 @@ app.post('/account/file-upload/:accountname', function(req, res, next) {
 
           // fifth row
           doc.rect(30, 505, 380, 15);  // current monthly charges
-
           doc.rect(410, 505, 160, 15); // without
-
           doc.stroke();
-
 
           var start_tax_date = '1 January';
           var end_tax_date = '31 Mar';
@@ -1462,13 +1457,15 @@ app.post('/account/file-upload/:accountname', function(req, res, next) {
                 
           doc.text('Authorised Signature', 100, 705);  
           doc.text('Company Stamp', 370, 705);
+
+
           doc.pipe(res);
-                                //creating a new PDF object
+          
+          //creating a new PDF object
           //doc.pipe(fs.createWriteStream('testfile2.pdf'));  //creating a write stream 
                       //to write the content on the file system
                       // more things can be added here including new pages
           doc.end(); //we end the document writing.
-      }); // query
     }); // pool
 
     }
@@ -1619,19 +1616,6 @@ app.post('/assigngroup',isLoggedIn, function(req, res, next ) {
   });
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
   // =====================================
   // VIEW GROUPS SECTION =================
   // =====================================
@@ -1663,7 +1647,6 @@ app.post('/assigngroup',isLoggedIn, function(req, res, next ) {
 
     });
   });
-
 
 
 	// =====================================
@@ -1756,8 +1739,6 @@ app.post('/assigngroup',isLoggedIn, function(req, res, next ) {
 
   });
 
-
-
 app.post('/editasset/:accountname/:assetid',isLoggedIn, function(req, res, next ) {
       // user wants to rename an asset
 
@@ -1799,13 +1780,8 @@ app.post('/editasset/:accountname/:assetid',isLoggedIn, function(req, res, next 
           });
         });
 
-
-
   }
   });
-
-
-
 
 	// =====================================
 	// VIEW ASSET SECTION =========================
@@ -1826,8 +1802,6 @@ app.post('/editasset/:accountname/:assetid',isLoggedIn, function(req, res, next 
 
 	});
 
-
-
 	// =====================================
 	// EXPORT ASSET LIST SECTION ============
 	// =====================================
@@ -1846,8 +1820,6 @@ app.post('/editasset/:accountname/:assetid',isLoggedIn, function(req, res, next 
         res.csv(rows);
       });
     });
-
-
 
 	});
 
@@ -1882,8 +1854,6 @@ app.post('/editasset/:accountname/:assetid',isLoggedIn, function(req, res, next 
 
     pool.getConnection(function(err, connection) {
       if(err) { console.log(err); return; }
-
-
 
       connection.query("SELECT accountid FROM d_accounts WHERE accountname = ?",req.body.accountname, function(err, accountid) {
       //console.log(accountid[0].accountid);
