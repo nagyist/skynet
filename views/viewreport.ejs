@@ -1,0 +1,141 @@
+<!-- views/account.ejs -->
+<!doctype html>
+<html>
+<head><% include /partials/head %>
+    <script>
+
+    var files = <%- JSON.stringify(files) %>;
+    var filestat = <%- JSON.stringify(filestat) %>;
+    var groups = <%- JSON.stringify(groups) %>;
+    var accounts = <%- JSON.stringify(accounts) %>;
+
+ function changeasset(option) {
+      console.log('changed');
+      $('select.groupid option').hide();
+      $('select.groupid option.'+option.value).show();
+      $('select.groupid option.all').show();
+      $('select.groupid').val('all');
+    }
+
+    </script>
+</head>
+
+<body>
+
+
+<header> <% include /partials/header %> </header>
+
+<div class="container">
+  <% if (message.length > 0) { %>
+    <div class="alert alert-info"><%- message %>  <button type="button" class="close" data-dismiss="alert">&times;</button></div>
+  <% } %>
+
+  <div class="page-header">
+    <h3>View Report</h3>
+  </div>
+
+
+
+<div class="row"> <!-- second row -->
+
+
+
+    <div class="col-sm-12"> <!-- multiple boxes here -->
+      <div class="well">
+      <form action="/viewreport" name="data"  id="data" method="post">
+
+          <div class="col-sm-4"> <!-- multiple boxes here -->
+          <p class="lead">Account</p>
+            <div class="form-group">
+              <select class="form-control accountid" name="accountid" onchange="changeasset(this)">
+                <option value='all' class='all'>All</option>
+                <% accounts.forEach(function(err, index) {%>
+                <option value= '<%=accounts[index].accountid%>'> <%=accounts[index].accountname%> </option>
+                <% });%>
+              </select>
+              </div>
+
+          </div>
+          <div class="col-sm-4"> <!-- multiple boxes here -->
+
+          <p class="lead">Group</p>
+            <div class="form-group">
+              <select class="form-control groupid" name="groupid">
+                <option value='all' class='all'>All</option>
+                <% groups.forEach(function(err, index) {%>
+                <option value= '<%=groups[index].groupid%>' class='<%=groups[index].accountid%>'> <%=groups[index].groupname%> </option>
+                <% });%>
+              </select>
+              </div>
+          </div>
+          <div class="col-sm-4"> <!-- multiple boxes here -->
+
+            <button type="submit" name="submit" value="submit" class="btn btn-sm btn-primary pull-right">View Generated Reports</button>
+            <!--<button type="submit" name="submit" value ="export" class="btn btn-sm btn-primary pull-right ">CSV</button>-->
+          </div>
+
+           <p> &nbsp; </p>
+           <p> &nbsp; </p>
+        </form>
+        </div>
+
+  </div> <!-- col -->
+
+    <% if (files.length > 0) {%>
+        <div class="col-sm-12">
+          <table class="table table-hover">
+          <thead>
+            <tr>
+              <td><strong>Report</strong></td>
+              <td><strong>Report Creation Date</strong></td>
+              <td><strong>Size</strong></td>
+            </tr>
+            </thead>
+          <% files.forEach(function(err, index) {%>
+            <tr>
+              <td><a href="accounts/<%=startaccount%>/<%=startgroup%>/<%=files[index]%>"><%=files[index]%> </a></td>
+              <td><%=moment(filestat[index].birthtime).format('DD MMMM YYYY, h:mm:ss a')%>  </td>
+              <td><%=filestat[index].size%> Bytes </td>
+
+            </tr>
+          <% });%>
+          </table>
+        </div>
+
+    <% } %>
+
+    </div>
+  </div>
+
+</div> <!-- row -->
+
+</div>
+<footer>
+  <% include /partials/footer %>
+</footer>
+
+<script type="text/javascript">
+
+// chart options
+
+var chart_options = {
+    responsive: true,
+    animation : false,
+};
+
+// set account and gorup tabs
+setTimeout(function(){
+
+      $('select.accountid').val('<%=startaccount%>');
+      $('select.groupid').val('<%=startgroup%>');
+
+      $('select.groupid option').hide();
+      $('select.groupid option.<%=startaccount%>').show();
+      $('select.groupid option.all').show();
+
+}, 1500);
+
+</script>
+
+</body>
+</html>

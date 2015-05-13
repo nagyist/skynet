@@ -8,24 +8,6 @@
     var groups = <%- JSON.stringify(groups) %>;
     var accounts = <%- JSON.stringify(accounts) %>;
 
- function changeasset(option) {
-      console.log('changed');
-      disablereport();
-      $('select.groupid option').hide();
-      $('select.groupid option.'+option.value).show();
-      $('select.groupid option.all').show();
-      $('select.groupid').val('all');
-    }
-
- function disablereport() {
-      $('button.report').prop('disabled', true)
-    }
-
- function enablereport() {
-      $('button.report').prop('disabled', false)
-    }
-
-
     </script>
 </head>
 
@@ -40,7 +22,7 @@
   <% } %>
 
   <div class="page-header">
-    <h3>Generate Ad-hoc Report</h3>
+    <h3>Automatic Report</h3>
   </div>
 
 
@@ -56,23 +38,16 @@
           <div class="col-sm-4"> <!-- multiple boxes here -->
 
           <p class="lead">Date</p>
-          <input value="<%=startaccount%>" type="hidden" name="accountname">
-          <div class="form-group input-daterange input-group pull-left" id="datepicker">
-              <input type="text" name="start" value="<%=start%>" class="input-sm form-control" id="input-daterange">
-              <span class="add-on input-group-addon">to</span>
-              <input type="text" name="end" value="<%=end%>" class="input-sm form-control" id="input-daterange">
-          </div>
+          <input type="text" name="start" value="<%=start%>" class="input-sm form-control" id="input-daterange">
+          <input type="text" name="end" value="<%=end%>" class="input-sm form-control" id="input-daterange">
 
           </div>
 
           <div class="col-sm-4"> <!-- multiple boxes here -->
           <p class="lead">Account</p>
             <div class="form-group">
-              <select class="form-control accountid" name="accountid" onchange="changeasset(this)">
-                <option value='all' class='all'>All</option>
-                <% accounts.forEach(function(err, index) {%>
-                <option value= '<%=accounts[index].accountid%>'> <%=accounts[index].accountname%> </option>
-                <% });%>
+              <select class="form-control accountid" name="accountid">
+                <option value= '<%=startaccount%>'> <%=startaccount%> </option>
               </select>
               </div>
 
@@ -82,19 +57,11 @@
           <p class="lead">Group</p>
             <div class="form-group">
               <select class="form-control groupid" name="groupid">
-                <option value='all' class='all'>All</option>
-                <% groups.forEach(function(err, index) {%>
-                <option value= '<%=groups[index].groupid%>' class='<%=groups[index].accountid%>'> <%=groups[index].groupname%> </option>
-                <% });%>
+                <option value= '<%=startgroup%>' class='<%=startgroup%>'> <%=startgroup%> </option>
               </select>
               </div>
           </div>
-            <button type="submit" name="submitbtn" value ="report" class="btn btn-primary pull-right report">Generate Report</button>
-            <button type="submit" name="submitbtn" value ="update" class="btn btn-primary pull-right"><% if (monthly.length > 0) { %>Refresh Data<%} else {%>Pull Data <%}%> </button>
-            <!--<button type="submit" name="submit" value ="export" class="btn btn-sm btn-primary pull-right ">CSV</button>-->
-           <input type="hidden" name="svgimg" id="svgimg" value="0">
-           <input type="hidden" name="svgimg2" id="svgimg2" value="0">
-           <input type="hidden" name="svgimg3" id="svgimg3" value="0">
+            <button type="submit" name="submitbtn" value="report" class="btn btn-primary pull-right report">Generate Report</button>
 
            <input type="hidden" name="totdailyimport" id="totdailyimport" value="0">
            <input type="hidden" name="totdailyexport" id="totdailyexport" value="0">
@@ -145,15 +112,6 @@
 </footer>
 
 <script type="text/javascript">
-
-// datepicker
-
-
-$('.input-daterange').datepicker({
-    format: 'yyyy-mm-dd',
-    //endDate:'+1d'
-})
-
 
 // chart options
 
@@ -265,7 +223,6 @@ var totdailyimport = dailyexpt.reduce( function(total, num){ return total + num 
   }
 // end daily select
 
-
 // Initialization of the Charts (*and destroy on each tab)
       var ctx1 = $("#myChart1").get(0).getContext("2d");
       var myLinechart1 = new Chart(ctx1).Line(dailydata, chart_options);
@@ -290,7 +247,6 @@ var totdailyimport = dailyexpt.reduce( function(total, num){ return total + num 
 
 // disable report button
 
-$('.report').button("disable");
 
 setTimeout(function(){
   
@@ -301,32 +257,23 @@ setTimeout(function(){
 
     document.data.dailygraph.value = a;
 
-
     var monthlyCanvas = document.getElementById("myChart3");
     var b = monthlyCanvas.toDataURL("image/png");
     document.data.monthlygraph.value = b;
     //console.log('everythng is loaded now');
-  $('.report').button("enable");
 
-// set account and gorup tabs
-
-
-      $('select.accountid').val('<%=startaccount%>');
-      $('select.groupid').val('<%=startgroup%>');
-
-      $('select.groupid option').hide();
-      $('select.groupid option.<%=startaccount%>').show();
-      $('select.groupid option.all').show();
+// set account and group tabs
 
 }, 1500);
+
+setTimeout(function(){
+  document.forms["data"].submit();
+  console.log('form submitted');
+},2000);
     //console.log(a);
     //console.log(document.data.daily_img.value);
 
-
 </script>
-
-
-
 
 </body>
 </html>

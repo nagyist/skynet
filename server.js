@@ -16,6 +16,8 @@ var io       = require('socket.io').listen(server);
 
 require('./config/passport')(passport); // pass passport for configuration
 
+var oneDay = 86400000;
+
 app.configure(function() {
 
 	// set up our express application
@@ -26,7 +28,8 @@ app.configure(function() {
 	app.set('view engine', 'ejs'); // set up ejs for templating
 
 	// required for passport
-	app.use(express.static(path.join(__dirname, 'public')));
+	app.use(express.compress());
+	app.use(express.static(path.join(__dirname, 'public'), { maxAge: oneDay }));
 	app.use(express.session({ secret: 'mummykoala' } )); // session secret
 	app.use(passport.initialize());
 	app.use(passport.session()); // persistent login sessions
