@@ -1,10 +1,14 @@
 <% var admin = 0 ;%>
 <% var mgr = 0 ;%>
+<% var root = 0; %>
 <% for (x = 0; x < accounts.length;x++) {%>
   <% if (accounts[x].roleid < 3) { %>
   <% mgr = 1; } %>
   <% if (accounts[x].roleid < 2) { %>
   <% admin = 1; } %> 
+  <% if (accounts[x].roleid < 1) { %>
+  <% root = 1; } %> 
+
 <% } %>
 
 <nav class="navbar navbar-default profile">
@@ -141,7 +145,7 @@
         
         <% } %>
 
-        <li class="dropdown">
+<!--         <li class="dropdown">
           <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">Events<span class="caret"></span></a>
           <ul class="dropdown-menu" role="menu">
             <li><a href="/">** IN DEVELOPMENT **</a></li>
@@ -162,7 +166,7 @@
               <% } %>
             <% });%>
           </ul>
-        </li>
+        </li> -->
 
         <li class="dropdown">
           <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">Reports<span class="caret"></span></a>
@@ -173,6 +177,17 @@
 
           </ul>
         </li>
+
+        <% if (root == 1) { %> <!-- this is if you are an administrator -->
+        <li class="dropdown">
+          <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">Administration<span class="caret"></span></a>
+          <ul class="dropdown-menu" role="menu">
+                <li><a href="/tariff">Tariffs</a></li>
+                <li><a href="/billing">Billing Account</a></li>
+          </ul>
+        </li>
+              <% } %>
+
 
         <!--<li class="dropdown">
           <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">Billing<span class="caret"></span></a>

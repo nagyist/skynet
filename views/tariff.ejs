@@ -1,0 +1,105 @@
+<!-- tariff.ejs -->
+<!doctype html>
+<html>
+<head><% include /partials/head %></head>
+
+<body>
+<header> <% include /partials/header %> </header>
+
+<div class="container">
+  <% if (message.length > 0) { %>
+    <div class="alert alert-info"><%- message %>  <button type="button" class="close" data-dismiss="alert">&times;</button></div>
+  <% } %>
+
+  <div class="page-header">
+    <h3>Tariff Table</h3>
+  </div>
+
+
+
+<div class="row"> <!-- second row -->
+
+
+
+    <div class="col-sm-12"> <!-- multiple boxes here -->
+      <div class="well">
+    
+      </div>
+
+    </div> <!-- col -->
+
+
+
+
+
+
+    <% if (tariff.length > 0) {%>
+        <div class="col-sm-12">
+          <table class="table table-hover">
+          <thead>
+            <tr>
+              <td rowspan="2"><strong>Account ID</strong></td>
+              <td rowspan="2"><strong>System Size (kWp)</strong></td>
+              <td rowspan="2"><strong>Bills/mo</strong></td>
+              <td colspan="2"><strong>Discount (%/$/kWh)</strong></td>
+              <td colspan="2"><strong>Clients' Current Tariff (SGD/kWh)</strong></td>
+              <td colspan="2"><strong>Sunseap Tariff (SGD/kWh)</strong></td>
+
+              <td rowspan="2"><strong>Discount Adjustment (C/E)</strong></td>
+              <td rowspan="2"><strong>Price Cap / Floor (SGD/kWh)</strong></td>
+              <td rowspan="2"><strong>Contract Tenure (years)</strong></td>
+              <td rowspan="2"><strong>Term (days)</strong></td>
+
+            </tr>
+            <tr>
+
+              <td><strong>Consumption</strong></td>
+              <td><strong>Export</strong></td>
+
+              <td><strong>Consumption</strong></td>
+              <td><strong>Export</strong></td>
+
+              <td><strong>Consumption</strong></td>
+              <td><strong>Export</strong></td>
+            </tr>
+            </thead>
+          <% tariff.forEach(function(err, index) {%>
+            <tr>
+              <td><%=tariff[index].accountid%></td>
+              <td><%=tariff[index].size%></td>
+              <td><%=tariff[index].bpm%></td>
+              <td><%=tariff[index].discount_consumption%></td>
+              <td><%=tariff[index].discount_export%></td>
+              <td><%=tariff[index].c_consumption_tariff%></td>
+              <td><%=tariff[index].c_export_tariff%></td>
+              <td><%=tariff[index].s_consumption_tariff%></td>
+              <td><%=tariff[index].s_export_tariff%></td>
+              <td><%=tariff[index].disc_adjust_import%> / <%=tariff[index].disc_adjust_export%> </td>
+              <td><%=tariff[index].price_cap%> / <%=tariff[index].price_floor%></td>
+              <td><%=tariff[index].contract_tenure%></td>
+              <td><%=tariff[index].payment_term%></td>
+            </tr>
+          <% });%>
+          </table>
+        </div>
+
+    <% } %>
+
+
+
+  </div>
+</div>
+
+</div> <!-- row -->
+
+</div>
+<footer>
+  <% include /partials/footer %>
+</footer>
+
+<script type="text/javascript">
+
+</script>
+
+</body>
+</html>

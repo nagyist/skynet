@@ -30,17 +30,71 @@ var PDF = require('pdfkit');            //including the pdfkit module
 // moment (time adjustments)
 var moment = require('moment');
 
+
+// database setup
 var mysql = require('mysql');
 var dbconfig = require('../config/database');
-
-// using pooled connections
 var pool = mysql.createPool(dbconfig.connection);
+
+// scheduler (cron)
+var CronJob = require('cron').CronJob;
+var prettyCron = require('prettycron');
 
 
 // FUNCTIONS --------------------------------------------------------------------------------------
 
-// This function ensures a directory exists before we actually store a file to it. Used in the report generation file
 
+// this function will take the frequency of scheduled tasks and determine and save it as a cron-formattable file
+// also saves the cron job to the database
+function startCron() {
+
+
+
+
+}
+
+
+// pulls existing cron jobs from the database
+function pullExistingCron() {
+  pool.getConnection(function(err, connection) {
+      if(err) { console.log(err); return; }
+      var sql = 'select * from f_schedule';
+      connection.query(sql, [], function(err, results) {
+
+        // if there is a result
+        if (results) {
+
+          results.forEach(function(result) {
+              var report = {accountid:result.accountid,groupid: result.groupid,startdate:result.startdate,enddate:result.enddate, lengthdays:result.lengthdays};
+              var schedule = ''+ result.seconds+' '+result.minutes+' '+result.hours+' '+result.dayofmonth+' '+result.months+' '+result.dayofweek+'';
+              console.log(report);
+              console.log(schedule);
+              // creae the job
+              var job = new CronJob({
+                cronTime: schedule,
+                onTick: function() {
+                  // this is the scheduled task
+                  pullautoreport(report);
+                },
+                start: true,
+                //timeZone: "America/Los_Angeles"
+              });
+              // start the job
+              job.start();
+          });
+
+        }
+
+        connection.release(); // always put connection back in pool after last query
+        if(err) { console.log(err); return; }
+      });
+  });
+
+
+}
+
+
+// This function ensures a directory exists before we actually store a file to it. Used in the report generation file
 function ensureExists(path, mask, cb) {
     if (typeof mask == 'function') { // allow the `mask` parameter to be optional
         cb = mask;
@@ -57,23 +111,15 @@ function ensureExists(path, mask, cb) {
 // this works with the automatic report pull
 // uses PhantomJS and node-phantom
 
-function pullautoreport() {
+function pullautoreport(data) {
   phantom.create(function (ph) {
     ph.createPage(function (page) {
 
-        // page.set('onLoadStarted', function () {
-        //   console.log("Loading started")
-        // })
-
-        // page.set('onLoadFinished', function (status) {
-        // console.log("Loading finished, the page is " + (status == "success") ? "open." : "not open!");
-        // console.log('test2');
-
-        // })
+      var startdate = moment(new Date()).subtract(data.lengthdays,'d').format("YYYY-MM-DD");
+      var enddate = moment(new Date()).add(0,'d').format("YYYY-MM-DD");
 
       page.set('viewportSize', {width: 1000, height: 480});
-
-      var url = 'http://localhost:3000/autoreport/1/37/2015-01-01/2015-05-01';
+      var url = 'http://localhost:3000/autoreport/'+data.accountid+'/'+data.groupid+'/'+startdate+'/'+enddate;
       page.open(url, function (status) {
         if ( status != 'success' ) {console.log("--------- failed ----------"); ph.exit();};
       page.includeJs("http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js", function() {
@@ -156,6 +202,9 @@ module.exports = function(app, passport, io, siofu ) {
   // Call Additional Routes (disabled because I can't figure it out. This would allow me to reduce the size of the routes.js file)
   //user(app, passport, pool, transporter, mysql, pool);
 
+  pullExistingCron();
+
+
   // this is for live socket updates, (not being used at the moment)
   io.on('connection', function (socket) {
 
@@ -173,7 +222,9 @@ module.exports = function(app, passport, io, siofu ) {
   // TESTING PURPOSES ONLY ===============
   // =====================================
   app.get('/testme',isLoggedIn, function(req, res, next ) {
-    pullautoreport();
+    //pullautoreport();
+    pullExistingCron();
+    res.redirect('/profile');
   });
 
   // =====================================
@@ -990,6 +1041,137 @@ app.post('/account/file-upload/:accountname', function(req, res, next) {
   }); // create report
 
 
+  // ===============================================================================================================
+  // SCHEDULE REPORT SECTION =====================================================================================
+  // ===============================================================================================================
+  // schedules the report timeframe and the frequency of the report
+
+  app.get('/schedulereport', isLoggedIn, function(req, res) {
+    res.render('schedulereport.ejs', {
+      moment:moment,                
+      startaccount:'',
+      startgroup:'',
+      existing:'',
+      sched: '',
+      next: '',
+      message:''
+    });
+  }); // create report
+
+
+  app.post('/schedulereport', isLoggedIn, function(req, res) {
+
+    if(req.body.submit == "existing") {
+      pool.getConnection(function(err, connection) {
+        if(err) { console.log(err); return; }
+
+        connection.query("select * from f_schedule where (accountid = ? or ? = 'all') and (groupid = ? or ? = 'all')",[req.body.accountid,req.body.accountid, req.body.groupid, req.body.groupid], function(err, existing) {
+                if(err) { console.log(err); return; }
+                    var sched = [];
+                    var next = [];
+
+                function renderschedreport() {
+                    res.render('schedulereport.ejs', {
+                      startaccount:req.body.accountid,
+                      startgroup:req.body.groupid,
+                      moment:moment,                
+                      existing: existing,
+                      sched: sched,
+                      next: next,
+                      message:''
+                    });
+                }
+
+                // outputs two pieces of data - schedule and next schedule in a "pretty" format
+                if (existing) {
+                    existing.forEach(function (each, index, array) {
+                      var cron = ''+each.minutes+' '+each.hours+' '+each.dayofmonth+' '+each.months+' '+each.dayofweek+'';
+                      sched.push(prettyCron.toString(cron));
+                      next.push(prettyCron.getNext(cron));
+
+                        if (index === array.length - 1) {
+                            //console.log('last one');
+                             renderschedreport();
+                         } // if 
+                    }); // foreach
+
+                } // if
+
+          }); // existing
+
+      }); // pool
+    } else if(req.body.submit == "add") {
+
+    }
+
+      // first pull in the existing schedules for this report and group
+     
+      // views reports
+
+  });
+
+  // ===============================================================================================================
+  // BILLING DATA SECTION ==========================================================================================
+  // ===============================================================================================================
+  // schedules the report timeframe and the frequency of the report
+
+  app.get('/billing', isLoggedIn, function(req, res) {
+    res.render('billing.ejs', {
+      moment:moment,                
+      startaccount:'',
+      existing:'',
+      message:''
+    });
+  }); // create report
+
+
+  app.post('/billing', isLoggedIn, function(req, res) {
+      pool.getConnection(function(err, connection) {
+
+    if(req.body.submit == "existing") {
+        if(err) { console.log(err); return; }
+
+        connection.query("select * from f_billing where accountid = ?",[req.body.accountid], function(err, existing) {
+                if(err) { console.log(err); return; }
+
+                    res.render('billing.ejs', {
+                      moment:moment,                
+                      startaccount:req.body.accountid,
+                      existing: existing,
+                      message:''
+                    });
+              
+          }); // existing
+
+    } else if(req.body.submit == "add") {
+
+          var balance = parseFloat(req.body.prev_balance) + parseFloat(req.body.debit) - parseFloat(req.body.credit);
+          var insertQuery = "INSERT INTO f_billing (accountid, prev_balance, credit, debit, transaction, transaction_date) values (?,?,?,?,?,?)";
+          connection.query(insertQuery,[req.body.accountid, balance, req.body.credit, req.body.debit, req.body.transaction, req.body.transaction_date],function(err, rows) {
+                      if(err) { console.log(err); return; }
+                  connection.query("select * from f_billing where accountid = ?",[req.body.accountid], function(err, existing) {
+                      if(err) { console.log(err); return; }
+
+                          res.render('billing.ejs', {
+                            moment:moment,                
+                            startaccount:req.body.accountid,
+                            existing: existing,
+                            message:'Billing Updated'
+                          });
+                    
+                  }); // existing
+          });
+    }
+
+
+    }); // pool
+  });
+
+
+
+
+
+
 
   // ===============================================================================================================
   // REPORT SECTION ================================================================================================
@@ -1010,8 +1192,6 @@ app.post('/account/file-upload/:accountname', function(req, res, next) {
 
   app.post('/viewreport', isLoggedIn, function(req, res) {
 
-
-
     fs.readdir('public/accounts/'+req.body.accountid+'/'+req.body.groupid, function (err, files) { // '/' denotes the root folder
 
       filestat = [];
@@ -1027,7 +1207,6 @@ app.post('/account/file-upload/:accountname', function(req, res, next) {
                         filestat:filestat,
                         message:''
                       });
-
       }
 
       if (err) {
@@ -1083,7 +1262,6 @@ app.post('/account/file-upload/:accountname', function(req, res, next) {
   var startmonth = moment(new Date()).subtract(12,'months').startOf('month').format("YYYY-MM-DD");
 
     pool.getConnection(function(err, connection) {
-
 
               res.render('createreport.ejs', {
                 startaccount:'',
@@ -1148,7 +1326,6 @@ app.post('/account/file-upload/:accountname', function(req, res, next) {
                 moment:moment,                
                 daily: daily,
                 monthly: monthly,
-               // assets:assets,
                 start: startdate,
                 end: enddate,
                 message:''
@@ -1159,8 +1336,6 @@ app.post('/account/file-upload/:accountname', function(req, res, next) {
         }); // daily
 
     }); // pool
-
-
     // this is to generate the report
     } else if (req.body.submitbtn == "report") {
       console.log('generating report');
@@ -1176,16 +1351,70 @@ app.post('/account/file-upload/:accountname', function(req, res, next) {
           });
 
 
-
-
    pool.getConnection(function(err, connection) {
+      connection.query("select * from f_tariff where accountid = ? limit 1 ",[req.body.accountid], function(err, tariff) {
       if(err) { console.log(err); return; }
+            console.log('my tariff is ', tariff)
           //console.log('im in the report generation tool');
 
-          var current_tariff = 0.2329;
-          var grid_charge = 0.15;
-          var sp_rate = 0.2329;
-          var discount = 0.12;
+          //var current_tariff = 0.2329;
+          //var grid_charge = 0.15;
+          //var sp_rate = 0.2329;
+          //var discount = 0.12;
+
+          // calculations
+          // you would add more complicated cases here
+
+          // these are the retailer or SP rates
+          var export_rate = tariff[0].c_export_tariff;
+          var import_rate = tariff[0].c_consumption_tariff;
+
+          // these are the sunseap effective rates
+          var suneeap_export_rate = tariff[0].c_export_tariff*(1-tariff[0].discount_export);
+          var suneap_import_rate = tariff[0].c_consumption_tariff*(1-tariff[0].discount_consumption);
+
+          // these are the discounts
+          var export_discount = tariff[0].discount_export;
+          var import_discount = tariff[0].discount_consumption;
+
+
+          // console.log(export_rate);
+          // console.log(import_rate);
+          // console.log(suneeap_export_rate);
+          // console.log(suneap_import_rate);
+          // console.log(export_discount);
+          // console.log(import_discount);
+
+
+          // these are adjustments (only percentages)
+          if (tariff[0].disc_adjust_export >0) {
+          suneeap_export_rate = tariff[0].c_export_tariff*(1-tariff[0].disc_adjust_export);
+          }
+
+
+          if (tariff[0].disc_adjust_import >0) {
+          suneap_import_rate = tariff[0].c_consumption_tariff*(1-tariff[0].disc_adjust_import);
+          }
+
+          // caps and floors
+          if (tariff[0].price_cap >0) {
+              if (suneap_import_rate > tariff[0].price_cap) {
+                suneap_import_rate = tariff[0].price_cap;
+              }
+              if (suneeap_export_rate > tariff[0].price_cap) {
+                suneeap_export_rate = tariff[0].price_cap;
+              }
+
+          }
+
+          if (tariff[0].price_floor >0) {
+              if (suneap_import_rate < tariff[0].price_floor) {
+                suneap_import_rate = tariff[0].price_floor;
+              }
+              if (suneeap_export_rate < tariff[0].price_floor) {
+                suneeap_export_rate = tariff[0].price_floor;
+              }
+          }
 
           //console.log(req.body.svgimg);
 
@@ -1210,13 +1439,11 @@ app.post('/account/file-upload/:accountname', function(req, res, next) {
                 'Content-Disposition': 'attachment; filename=report_'+req.body.accountid+'-'+req.body.groupid+'_'+startdate+'_'+enddate+'.pdf'
             });
 
-
           // header - top
           doc.lineWidth(0.5);
           doc.font('Helvetica-Bold');
           doc.fontSize(13);
           doc.text(headline, 260, 30);             //adding the text to be written, 
-
 
           // header - left
           doc.image('public/img/sunseap_logo_trans.jpg',30,70, {width:50});
@@ -1366,28 +1593,24 @@ app.post('/account/file-upload/:accountname', function(req, res, next) {
           doc.text('Exported', 40, 440);           
           doc.text('Usage', 40, 455);           
 
-          doc.text(Math.round(req.body.sum_impt*1000)/1000, 175, 440);           
-          doc.text(Math.round(req.body.sum_expt*1000)/1000, 175, 455);           
+          doc.text(Math.round(req.body.totdailyexport*1000)/1000, 175, 440);           
+          doc.text(Math.round(req.body.totdailyimport*1000)/1000, 175, 455);           
 
-          //effective rates
-          doc.text(current_tariff - grid_charge, 255, 440);           
-          doc.text((current_tariff), 255, 455);           
-
-          // amount
-          doc.text(Math.round(req.body.totdailyimport * (current_tariff - grid_charge)*1000)/1000, 335, 440);           
-          doc.text(Math.round(req.body.totdailyexport * (current_tariff)*1000)/1000, 335, 455);           
-
-          //effective rates
-          doc.text(current_tariff - grid_charge, 415, 440);           
-          doc.text(sp_rate * (1 - discount), 415, 455);           
-
-          //amount
-          doc.text(current_tariff - grid_charge, 415, 440);           
-          doc.text(sp_rate * (1 - discount), 415, 455);           
+          //effective rates without sunseap
+          doc.text(export_rate, 255, 440);           
+          doc.text(import_rate, 255, 455);           
 
           // amount
-          doc.text(Math.round(req.body.totdailyimport * (current_tariff - grid_charge)*1000)/1000, 495, 440);           
-          doc.text(Math.round(req.body.totdailyexport * (sp_rate * (1 - discount))*1000)/1000, 495, 455);           
+          doc.text(Math.round(req.body.totdailyexport * (export_discount)*1000)/1000, 335, 440);           
+          doc.text(Math.round(req.body.totdailyimport * (import_rate)*1000)/1000, 335, 455);           
+
+          //effective rates with sunseap
+          doc.text(suneeap_export_rate, 415, 440);           
+          doc.text(suneap_import_rate, 415, 455);           
+
+          // amount
+          doc.text(Math.round(req.body.totdailyexport * (suneeap_export_rate)*1000)/1000, 495, 440);           
+          doc.text(Math.round(req.body.totdailyimport * (suneap_import_rate)*1000)/1000, 495, 455);           
 
           // fourth row
           doc.rect(30, 465, 140, 40);  // current monthly charges
@@ -1414,8 +1637,8 @@ app.post('/account/file-upload/:accountname', function(req, res, next) {
 
           doc.fontSize(8);
           doc.font('Helvetica');
-          doc.text('Effective Export Rate = Current Tariff - Grid Charge = '+'current_tariff'+' - '+'grid_charge' + ' = ' + (current_tariff - grid_charge), 30, 555);           
-          doc.text('Effective Usage Rate = SP Rate x Discount Rate = '+'sp_rate'+' * '+'(1-discount)' + ' = ' + sp_rate * (1-discount), 30, 570);           
+          doc.text('Effective Export Rate = Current Tariff - Grid Charge = '+export_rate+' x (1 - '+export_discount+ ') = ' + suneeap_export_rate, 30, 555);           
+          doc.text('Effective Usage Rate = '+tariff[0].tariff_base+' Rate x Discount Rate = '+import_rate+' x (1 - '+ import_discount + ') = ' + suneap_import_rate, 30, 570);           
           doc.text('Please make full payment by the due date to avoid late payment charges.', 30, 600);           
           doc.text('Please visit www.sunseap-leasing.com for more information on our service and conditions of service.', 30, 615);           
           doc.text('This bill services as a tax invoice for the collection of Solar Leasing Charges for SUNSEAP LEASING PTE LTD.', 30, 630);           
@@ -1436,6 +1659,7 @@ app.post('/account/file-upload/:accountname', function(req, res, next) {
                       //to write the content on the file system
                       // more things can be added here including new pages
           doc.end(); //we end the document writing.
+        }); // query
     }); // pool
 
     }
@@ -1617,6 +1841,32 @@ app.post('/assigngroup',isLoggedIn, function(req, res, next ) {
 
     });
   });
+
+
+
+  // ===============================================================================================================
+  // TARIFF SECTION ================================================================================================
+  // ===============================================================================================================
+  // This section is about the tariffs page. showing the SP an retail rates, and discounts.
+
+  app.get('/tariff', isLoggedIn, function(req, res) {
+
+      pool.getConnection(function(err, connection) {
+        if(err) { console.log(err); return; }
+        connection.query("select * from f_tariff ",[], function(err, tariff) {
+
+            res.render('tariff.ejs', {
+              moment:moment,                
+              tariff:tariff,
+              message:''
+            });
+
+        }); // query
+
+      }); pool
+
+  }); // create report
+
 
 
 	// =====================================
@@ -2123,16 +2373,56 @@ function isLoggedIn(req, res, next) {
   res.redirect('/');
 }
 
-
-
 // this function will call the report
 
 function billingreport(accountid,groupid,startdate,enddate,totdailyimport,totdailyexport,dailygraph,monthlygraph) {
+  pool.getConnection(function(err, connection) {
+    connection.query("select * from f_tariff where accountid = ? limit 1 ",[accountid], function(err, tariff) {
+      if(err) { console.log(err); return; }
+          // calculations
+          // you would add more complicated cases here
 
-          var current_tariff = 0.2329;
-          var grid_charge = 0.15;
-          var sp_rate = 0.2329;
-          var discount = 0.12;
+          // these are the retailer or SP rates
+          var export_rate = tariff[0].c_export_tariff;
+          var import_rate = tariff[0].c_consumption_tariff;
+
+          // these are the sunseap effective rates
+          var suneeap_export_rate = tariff[0].c_export_tariff*(1-tariff[0].discount_export);
+          var suneap_import_rate = tariff[0].c_consumption_tariff*(1-tariff[0].discount_consumption);
+
+          // these are the discounts
+          var export_discount = tariff[0].discount_export;
+          var import_discount = tariff[0].discount_consumption;
+
+          // these are adjustments (only percentages)
+          if (tariff[0].disc_adjust_export >0) {
+          suneeap_export_rate = tariff[0].c_export_tariff*(1-tariff[0].disc_adjust_export);
+          }
+
+
+          if (tariff[0].disc_adjust_import >0) {
+          suneap_import_rate = tariff[0].c_consumption_tariff*(1-tariff[0].disc_adjust_import);
+          }
+
+          // caps and floors
+          if (tariff[0].price_cap >0) {
+              if (suneap_import_rate > tariff[0].price_cap) {
+                suneap_import_rate = tariff[0].price_cap;
+              }
+              if (suneeap_export_rate > tariff[0].price_cap) {
+                suneeap_export_rate = tariff[0].price_cap;
+              }
+
+          }
+
+          if (tariff[0].price_floor >0) {
+              if (suneap_import_rate < tariff[0].price_floor) {
+                suneap_import_rate = tariff[0].price_floor;
+              }
+              if (suneeap_export_rate < tariff[0].price_floor) {
+                suneeap_export_rate = tariff[0].price_floor;
+              }
+          }
 
           //console.log(req.body.svgimg);
 
@@ -2146,17 +2436,15 @@ function billingreport(accountid,groupid,startdate,enddate,totdailyimport,totdai
           var address6 = 'GST Reg No. '+'201107952W';
 
           var location = 'Blk 214 Jurong East St 21, Singapore 600214';
-          var text2 = 'Energy Generation for this Period: '+ Math.round(totdailyimport*1000)/1000+' kWh';
+          var text2 = 'Energy Generation for this Period: '+ Math.round(req.body.totdailyimport*1000)/1000+' kWh';
 
-          var dates = 'Generated between ' + startdate+ ' and ' + enddate;
+          var dates = 'Generated between ' + req.body.start+ ' and ' + req.body.end;
           doc = new PDF({size:'A4'});  
-
           // header - top
           doc.lineWidth(0.5);
           doc.font('Helvetica-Bold');
           doc.fontSize(13);
           doc.text(headline, 260, 30);             //adding the text to be written, 
-
 
           // header - left
           doc.image('public/img/sunseap_logo_trans.jpg',30,70, {width:50});
@@ -2171,18 +2459,21 @@ function billingreport(accountid,groupid,startdate,enddate,totdailyimport,totdai
           // header - right
 
           //
+
+          var dailygraph = req.body.dailygraph;
           doc.image(dailygraph,40, 190,{width:510});
+          var monthlygraph = req.body.monthlygraph;
           doc.image(monthlygraph,40, 480,{width:510});
 
           //if i wanted to make it a buffer instead
           //var dailybuffer = new Buffer(dailygraph.replace('data:image/png;base64,','') || '', 'base64');
           //doc.image(dailybuffer);
 
+
+
           //doc.rect(10, 10, 575, 815); total width is 585 and height is 825
           //doc.rect(10, 10, 575, 200);
           doc.text(text2, 40, 440);             //adding the text to be written, 
-
-
           doc.rect(30, 180, 535, 280);
 
           doc.rect(30, 470, 535, 280);
@@ -2250,19 +2541,19 @@ function billingreport(accountid,groupid,startdate,enddate,totdailyimport,totdai
           doc.rect(30, 295, 300, 20);
           doc.stroke();
           // text
-          doc.text('SUMMARY OF CHARGES ' + startdate + ' to ' + enddate, 35, 205);             //adding the text to be written, 
+          doc.text('SUMMARY OF CHARGES ' + req.body.start + ' to ' + req.body.end, 35, 205);             //adding the text to be written, 
           doc.text('Amount ($)', 265, 205);             //adding the text to be written, 
 
           // line items
           doc.text('Balance B/F from Previous Bill', 35, 235);
           doc.text('Outstanding Balance', 35, 265);           
-          doc.text('Total Current Charges due on ' + enddate, 35, 280);   
+          doc.text('Total Current Charges due on ' + req.body.end, 35, 280);   
           doc.font('Helvetica-Bold');
           doc.fontSize(10);
           doc.text('Total Amount Payable', 35, 300); 
           doc.fontSize(8);
           doc.font('Helvetica');
-          doc.text('Payment received on or after '+moment(enddate,'DD/MM/YYYY').add(1,'d').format('DD MMM YYYY')+' may not be included in this bill', 30, 345);           
+          doc.text('Payment received on or after '+moment(req.body.end,'DD/MM/YYYY').add(1,'d').format('DD MMM YYYY')+' may not be included in this bill', 30, 345);           
 
           // top row
           doc.text('CURRENT MONTH CHARGES', 40, 385);           
@@ -2297,32 +2588,28 @@ function billingreport(accountid,groupid,startdate,enddate,totdailyimport,totdai
           doc.rect(410, 405, 80, 60); // without
           doc.rect(490, 405, 80, 60); // without
   
-          doc.text('Reading taken on '+ enddate, 35, 410);           
+          doc.text('Reading taken on '+ req.body.end, 35, 410);           
           doc.text('Exported', 40, 440);           
           doc.text('Usage', 40, 455);           
 
-          doc.text(Math.round(totdailyimport*1000)/1000, 175, 440);           
-          doc.text(Math.round(totdailyexport*1000)/1000, 175, 455);           
+          doc.text(Math.round(req.body.totdailyexport*1000)/1000, 175, 440);           
+          doc.text(Math.round(req.body.totdailyimport*1000)/1000, 175, 455);           
 
-          //effective rates
-          doc.text(current_tariff - grid_charge, 255, 440);           
-          doc.text((current_tariff), 255, 455);           
-
-          // amount
-          doc.text(Math.round(totdailyimport * (current_tariff - grid_charge)*1000)/1000, 335, 440);           
-          doc.text(Math.round(totdailyexport * (current_tariff)*1000)/1000, 335, 455);           
-
-          //effective rates
-          doc.text(current_tariff - grid_charge, 415, 440);           
-          doc.text(sp_rate * (1 - discount), 415, 455);           
-
-          //amount
-          doc.text(current_tariff - grid_charge, 415, 440);           
-          doc.text(sp_rate * (1 - discount), 415, 455);           
+          //effective rates without sunseap
+          doc.text(export_rate, 255, 440);           
+          doc.text(import_rate, 255, 455);           
 
           // amount
-          doc.text(Math.round(totdailyimport * (current_tariff - grid_charge)*1000)/1000, 495, 440);           
-          doc.text(Math.round(totdailyexport * (sp_rate * (1 - discount))*1000)/1000, 495, 455);           
+          doc.text(Math.round(req.body.totdailyexport * (export_discount)*1000)/1000, 335, 440);           
+          doc.text(Math.round(req.body.totdailyimport * (import_rate)*1000)/1000, 335, 455);           
+
+          //effective rates with sunseap
+          doc.text(suneeap_export_rate, 415, 440);           
+          doc.text(suneap_import_rate, 415, 455);           
+
+          // amount
+          doc.text(Math.round(req.body.totdailyexport * (suneeap_export_rate)*1000)/1000, 495, 440);           
+          doc.text(Math.round(req.body.totdailyimport * (suneap_import_rate)*1000)/1000, 495, 455);           
 
           // fourth row
           doc.rect(30, 465, 140, 40);  // current monthly charges
@@ -2349,8 +2636,8 @@ function billingreport(accountid,groupid,startdate,enddate,totdailyimport,totdai
 
           doc.fontSize(8);
           doc.font('Helvetica');
-          doc.text('Effective Export Rate = Current Tariff - Grid Charge = '+'current_tariff'+' - '+'grid_charge' + ' = ' + (current_tariff - grid_charge), 30, 555);           
-          doc.text('Effective Usage Rate = SP Rate x Discount Rate = '+'sp_rate'+' * '+'(1-discount)' + ' = ' + sp_rate * (1-discount), 30, 570);           
+          doc.text('Effective Export Rate = Current Tariff - Grid Charge = '+export_rate+' x (1 - '+export_discount+ ') = ' + suneeap_export_rate, 30, 555);           
+          doc.text('Effective Usage Rate = '+tariff[0].tariff_base+' Rate x Discount Rate = '+import_rate+' x (1 - '+ import_discount + ') = ' + suneap_import_rate, 30, 570);           
           doc.text('Please make full payment by the due date to avoid late payment charges.', 30, 600);           
           doc.text('Please visit www.sunseap-leasing.com for more information on our service and conditions of service.', 30, 615);           
           doc.text('This bill services as a tax invoice for the collection of Solar Leasing Charges for SUNSEAP LEASING PTE LTD.', 30, 630);           
@@ -2368,6 +2655,8 @@ function billingreport(accountid,groupid,startdate,enddate,totdailyimport,totdai
                       //to write the content on the file system
                       // more things can be added here including new pages
           doc.end(); //we end the document writing.
+      });
+  });
 
 };
 

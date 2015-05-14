@@ -1,0 +1,167 @@
+<!-- schedulereport.ejs -->
+<!doctype html>
+<html>
+<head><% include /partials/head %>
+    <script>
+
+    var accounts = <%- JSON.stringify(accounts) %>;
+    var existing = <%- JSON.stringify(existing) %>;
+
+ function changeasset(option) {
+      console.log('changed');
+      $('select.groupid option').hide();
+      $('select.groupid option.'+option.value).show();
+      $('select.groupid option.all').show();
+      $('select.groupid').val('all');
+
+
+    }
+
+    </script>
+</head>
+
+<body>
+
+
+<header> <% include /partials/header %> </header>
+
+<div class="container">
+  <% if (message.length > 0) { %>
+    <div class="alert alert-info"><%- message %>  <button type="button" class="close" data-dismiss="alert">&times;</button></div>
+  <% } %>
+
+  <div class="page-header">
+    <h3>Review Billing</h3>
+  </div>
+
+<div class="row"> <!-- second row -->
+
+    <div class="col-sm-12"> <!-- multiple boxes here -->
+      <div class="well">
+      <div class="row">
+      <form action="/billing" name="data" id="data" method="post">
+
+          <div class="col-sm-4"> <!-- multiple boxes here -->
+          <p class="lead">Account</p>
+            <div class="form-group">
+              <select class="form-control accountid" name="accountid" onchange="changeasset(this)">
+                <option value='all' class='all'>All</option>
+                <% accounts.forEach(function(err, index) {%>
+                <option value= '<%=accounts[index].accountid%>'> <%=accounts[index].accountname%> </option>
+                <% });%>
+              </select>
+              </div>
+          </div>
+
+          <div class="col-sm-2 col-sm-offset-6"> <!-- multiple boxes here -->
+          <p class="lead">&nbsp;</p>
+            <button type="submit" name="submit" value="existing" class="btn btn-sm btn-primary btn-block">Pull Account Info</button>
+          </div>
+          </div>
+              <hr>
+              <p class="lead">Add New Line</p>
+
+              <div class="row">
+              <div class="col-sm-3 form-group">
+                <label>Current Balance</label>
+                <input type="text" class="form-control" name="prev_balance" readonly>
+              </div>
+
+              <div class=" col-sm-2 form-group">
+                <label>Debits (Deposits)</label>
+                <input type="text" class="form-control" name="debit" value='0'>
+              </div>
+
+              <div class=" col-sm-2 form-group">
+                <label>Credits</label>
+                <input type="text" class="form-control" name="credit" value='0'>
+              </div>
+
+              <div class=" col-sm-2 form-group">
+                <label>Transaction</label>
+                <input type="text" class="form-control" name="transaction" >
+              </div>
+
+              <div class=" col-sm-2 form-group">
+                <label>Date</label>
+                <input type="text" class="form-control" name="transaction_date" value="<%=moment(new Date()).format("YYYY-MM-DD")%>" readonly>
+              </div>
+
+              <div class="col-sm-2">
+                <label>&nbsp;</label>
+                <button type="submit" name="submit" value="add" class="btn btn-sm btn-primary btn-block">Update Balance</button>
+
+              </div>
+
+              </div> <!-- row -->
+
+        </form>
+        </div>
+
+    </div> <!-- col -->
+
+
+
+
+
+
+    <% if (existing.length > 0) {%>
+        <div class="col-sm-12">
+          <table class="table table-hover">
+          <thead>
+            <tr>
+              <td><strong>Balance</strong></td>
+              <td><strong>Credits</strong></td>
+              <td><strong>Debits</strong></td>
+              <td><strong>Transaction</strong></td>
+              <td><strong>Transaction Date</strong></td>
+            </tr>
+            </thead>
+          <% existing.forEach(function(err, index) {%>
+            <tr>
+              <td><%=existing[index].prev_balance%></td>
+              <td><%=existing[index].credit%></td>
+              <td><%=existing[index].debit%></td>
+              <td><%=existing[index].transaction%></td>
+              <td><%=existing[index].transaction_date%></td>
+            </tr>
+          <% });%>
+          </table>
+        </div>
+
+    <% } %>
+
+
+
+  </div>
+</div>
+
+</div> <!-- row -->
+
+</div>
+<footer>
+  <% include /partials/footer %>
+</footer>
+
+<script type="text/javascript">
+
+    document.forms["data"].prev_balance.value = existing[existing.length-1].prev_balance;
+
+
+// set account and group tabs
+setTimeout(function(){
+
+      $('select.accountid').val('<%=startaccount%>');
+
+      $('select.groupid option').hide();
+      $('select.groupid option.<%=startaccount%>').show();
+      $('select.groupid option.all').show();
+
+}, 100);
+
+
+
+</script>
+
+</body>
+</html>

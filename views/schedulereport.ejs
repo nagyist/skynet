@@ -1,0 +1,210 @@
+<!-- schedulereport.ejs -->
+<!doctype html>
+<html>
+<head><% include /partials/head %>
+    <script>
+
+    var groups = <%- JSON.stringify(groups) %>;
+    var accounts = <%- JSON.stringify(accounts) %>;
+    var existing = <%- JSON.stringify(existing) %>;
+
+
+
+
+
+ function changeasset(option) {
+      console.log('changed');
+      $('select.groupid option').hide();
+      $('select.groupid option.'+option.value).show();
+      $('select.groupid option.all').show();
+      $('select.groupid').val('all');
+    }
+
+    </script>
+</head>
+
+<body>
+
+
+<header> <% include /partials/header %> </header>
+
+<div class="container">
+  <% if (message.length > 0) { %>
+    <div class="alert alert-info"><%- message %>  <button type="button" class="close" data-dismiss="alert">&times;</button></div>
+  <% } %>
+
+  <div class="page-header">
+    <h3>Schedule a Report</h3>
+  </div>
+
+
+
+<div class="row"> <!-- second row -->
+
+
+
+    <div class="col-sm-12"> <!-- multiple boxes here -->
+      <div class="well">
+      <div class="row">
+      <form action="/schedulereport" name="data" id="data" method="post">
+
+          <div class="col-sm-4"> <!-- multiple boxes here -->
+          <p class="lead">Account</p>
+            <div class="form-group">
+              <select class="form-control accountid" name="accountid" onchange="changeasset(this)">
+                <option value='all' class='all'>All</option>
+                <% accounts.forEach(function(err, index) {%>
+                <option value= '<%=accounts[index].accountid%>'> <%=accounts[index].accountname%> </option>
+                <% });%>
+              </select>
+              </div>
+
+          </div>
+          <div class="col-sm-4"> <!-- multiple boxes here -->
+          <p class="lead">Group</p>
+            <div class="form-group">
+              <select class="form-control groupid" name="groupid">
+                <option value='all' class='all'>All</option>
+                <% groups.forEach(function(err, index) {%>
+                <option value= '<%=groups[index].groupid%>' class='<%=groups[index].accountid%>'> <%=groups[index].groupname%> </option>
+                <% });%>
+              </select>
+              </div>
+          </div>
+          <div class="col-sm-2 col-sm-offset-2"> <!-- multiple boxes here -->
+          <p class="lead">&nbsp;</p>
+            <button type="submit" name="submit" value="existing" class="btn btn-sm btn-primary btn-block">View Existing Schedules</button>
+          </div>
+          </div>
+              <hr>
+              <p class="lead">Schedule Parameters</p>
+
+              <div class="row">
+              <div class="col-sm-1 form-group">
+                <label>Seconds</label>
+                <input type="text" class="form-control" name="seconds" placeholder="0-59">
+              </div>
+
+              <div class=" col-sm-1 form-group">
+                <label>Minutes</label>
+                <input type="text" class="form-control" name="minutes" placeholder="0-59">
+              </div>
+
+              <div class=" col-sm-1 form-group">
+                <label>Hours</label>
+                <input type="text" class="form-control" name="minutes" placeholder="0-23">
+              </div>
+
+              <div class=" col-sm-2 form-group">
+                <label>Days of Month</label>
+                <input type="text" class="form-control" name="minutes" placeholder="1-31">
+              </div>
+
+              <div class=" col-sm-1 form-group">
+                <label>Months</label>
+                <input type="text" class="form-control" name="minutes" placeholder="0-11">
+              </div>
+
+              <div class="col-sm-2 form-group">
+                <label>Days of Week</label>
+                <input type="text" class="form-control" name="minutes" placeholder="0-6">
+              </div>
+
+            <div class="col-sm-2">
+                <label>Period</label>
+                <input type="text" class="form-control" name="lengthdays" placeholder="Days">
+
+              </div>
+
+              <div class="col-sm-2">
+                <label>&nbsp;</label>
+                <button type="submit" name="submit" value="add" class="btn btn-sm btn-primary btn-block">Add Schedules</button>
+
+              </div>
+
+              <div class="col-sm-12">
+
+              <strong>Available Patterns:</strong> Numbers (1), Ranges (1-4), Multiple (1,2,3), All (*), Steps (*/2)
+
+              </div>
+              </div> <!-- row -->
+
+        </form>
+        </div>
+
+    </div> <!-- col -->
+
+
+
+
+
+
+    <% if (existing.length > 0) {%>
+        <div class="col-sm-12">
+          <table class="table table-hover">
+          <thead>
+            <tr>
+              <td><strong>Schedule ID</strong></td>
+              <td><strong>Time Span</strong></td>
+              <td><strong>Sec</strong></td>
+              <td><strong>Min</strong></td>
+              <td><strong>Hour</strong></td>
+              <td><strong>Day of Month</strong></td>
+              <td><strong>Months</strong></td>
+              <td><strong>Day of Week</strong></td>
+
+
+              <td><strong>Schedule</strong></td>
+              <td><strong>Next Run</strong></td>              
+            </tr>
+            </thead>
+          <% existing.forEach(function(err, index) {%>
+            <tr>
+              <td><%=existing[index].id%></td>
+              <td><%=existing[index].lengthdays%> Days</td>
+              <td><%=existing[index].seconds%></td>
+              <td><%=existing[index].minutes%></td>
+              <td><%=existing[index].hours%></td>
+              <td><%=existing[index].dayofmonth%></td>
+              <td><%=existing[index].months%></td>
+              <td><%=existing[index].dayofweek%></td>
+              <td><%=sched[index]%></td>
+              <td><%=next[index]%></td>
+            </tr>
+          <% });%>
+          </table>
+        </div>
+
+    <% } %>
+
+
+
+  </div>
+</div>
+
+</div> <!-- row -->
+
+</div>
+<footer>
+  <% include /partials/footer %>
+</footer>
+
+<script type="text/javascript">
+
+
+// set account and group tabs
+setTimeout(function(){
+
+      $('select.accountid').val('<%=startaccount%>');
+      $('select.groupid').val('<%=startgroup%>');
+
+      $('select.groupid option').hide();
+      $('select.groupid option.<%=startaccount%>').show();
+      $('select.groupid option.all').show();
+
+}, 1500);
+
+</script>
+
+</body>
+</html>
