@@ -2436,9 +2436,9 @@ function billingreport(accountid,groupid,startdate,enddate,totdailyimport,totdai
           var address6 = 'GST Reg No. '+'201107952W';
 
           var location = 'Blk 214 Jurong East St 21, Singapore 600214';
-          var text2 = 'Energy Generation for this Period: '+ Math.round(req.body.totdailyimport*1000)/1000+' kWh';
+          var text2 = 'Energy Generation for this Period: '+ Math.round(totdailyimport*1000)/1000+' kWh';
 
-          var dates = 'Generated between ' + req.body.start+ ' and ' + req.body.end;
+          var dates = 'Generated between ' + startdate+ ' and ' + enddate;
           doc = new PDF({size:'A4'});  
           // header - top
           doc.lineWidth(0.5);
@@ -2460,9 +2460,9 @@ function billingreport(accountid,groupid,startdate,enddate,totdailyimport,totdai
 
           //
 
-          var dailygraph = req.body.dailygraph;
+          var dailygraph = dailygraph;
           doc.image(dailygraph,40, 190,{width:510});
-          var monthlygraph = req.body.monthlygraph;
+          var monthlygraph = monthlygraph;
           doc.image(monthlygraph,40, 480,{width:510});
 
           //if i wanted to make it a buffer instead
@@ -2541,19 +2541,19 @@ function billingreport(accountid,groupid,startdate,enddate,totdailyimport,totdai
           doc.rect(30, 295, 300, 20);
           doc.stroke();
           // text
-          doc.text('SUMMARY OF CHARGES ' + req.body.start + ' to ' + req.body.end, 35, 205);             //adding the text to be written, 
+          doc.text('SUMMARY OF CHARGES ' + startdate + ' to ' + enddate, 35, 205);             //adding the text to be written, 
           doc.text('Amount ($)', 265, 205);             //adding the text to be written, 
 
           // line items
           doc.text('Balance B/F from Previous Bill', 35, 235);
           doc.text('Outstanding Balance', 35, 265);           
-          doc.text('Total Current Charges due on ' + req.body.end, 35, 280);   
+          doc.text('Total Current Charges due on ' + enddate, 35, 280);   
           doc.font('Helvetica-Bold');
           doc.fontSize(10);
           doc.text('Total Amount Payable', 35, 300); 
           doc.fontSize(8);
           doc.font('Helvetica');
-          doc.text('Payment received on or after '+moment(req.body.end,'DD/MM/YYYY').add(1,'d').format('DD MMM YYYY')+' may not be included in this bill', 30, 345);           
+          doc.text('Payment received on or after '+moment(enddate,'DD/MM/YYYY').add(1,'d').format('DD MMM YYYY')+' may not be included in this bill', 30, 345);           
 
           // top row
           doc.text('CURRENT MONTH CHARGES', 40, 385);           
@@ -2588,28 +2588,28 @@ function billingreport(accountid,groupid,startdate,enddate,totdailyimport,totdai
           doc.rect(410, 405, 80, 60); // without
           doc.rect(490, 405, 80, 60); // without
   
-          doc.text('Reading taken on '+ req.body.end, 35, 410);           
+          doc.text('Reading taken on '+ enddate, 35, 410);           
           doc.text('Exported', 40, 440);           
           doc.text('Usage', 40, 455);           
 
-          doc.text(Math.round(req.body.totdailyexport*1000)/1000, 175, 440);           
-          doc.text(Math.round(req.body.totdailyimport*1000)/1000, 175, 455);           
+          doc.text(Math.round(totdailyexport*1000)/1000, 175, 440);           
+          doc.text(Math.round(totdailyimport*1000)/1000, 175, 455);           
 
           //effective rates without sunseap
           doc.text(export_rate, 255, 440);           
           doc.text(import_rate, 255, 455);           
 
           // amount
-          doc.text(Math.round(req.body.totdailyexport * (export_discount)*1000)/1000, 335, 440);           
-          doc.text(Math.round(req.body.totdailyimport * (import_rate)*1000)/1000, 335, 455);           
+          doc.text(Math.round(totdailyexport * (export_discount)*1000)/1000, 335, 440);           
+          doc.text(Math.round(totdailyimport * (import_rate)*1000)/1000, 335, 455);           
 
           //effective rates with sunseap
           doc.text(suneeap_export_rate, 415, 440);           
           doc.text(suneap_import_rate, 415, 455);           
 
           // amount
-          doc.text(Math.round(req.body.totdailyexport * (suneeap_export_rate)*1000)/1000, 495, 440);           
-          doc.text(Math.round(req.body.totdailyimport * (suneap_import_rate)*1000)/1000, 495, 455);           
+          doc.text(Math.round(totdailyexport * (suneeap_export_rate)*1000)/1000, 495, 440);           
+          doc.text(Math.round(totdailyimport * (suneap_import_rate)*1000)/1000, 495, 455);           
 
           // fourth row
           doc.rect(30, 465, 140, 40);  // current monthly charges
